@@ -9,5 +9,9 @@ type Task struct {
 	concurrent   int
 	command      string
 	status       int
+}
 
+func (t *Task)InitTasks() (err error) {
+
+	return nil
 }
