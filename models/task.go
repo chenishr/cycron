@@ -22,7 +22,50 @@ type TaskMod struct {
 /**
 	获取待执行的任务
  */
-func (t *TaskMod)GetTasks() (Tasks []*TaskMod,err error) {
+func GetTasks() (Tasks []*TaskMod,err error) {
+	var (
+		task *TaskMod
+	)
+
+	task = &TaskMod{
+		Id:           1,
+		UserId:       1,
+		GroupId:      1,
+		TaskName:     "第 1 个任务",
+		TaskType:     0,
+		Description:  "第 1 个任务",
+		CronSpec:     "*/5 * * * * * *",
+		Concurrent:   0,
+		Command:      "echo 'Hello,World!';",
+		Status:       1,
+		Notify:       0,
+		NotifyEmail:  "",
+		Timeout:      0,
+		ExecuteTimes: 0,
+		PrevTime:     0,
+		CreateTime:   0,
+	}
+	Tasks = append(Tasks,task)
+
+	task = &TaskMod{
+		Id:           2,
+		UserId:       1,
+		GroupId:      1,
+		TaskName:     "第 2 个任务",
+		TaskType:     0,
+		Description:  "第 2 个任务",
+		CronSpec:     "*/10 * * * * * *",
+		Concurrent:   0,
+		Command:      "echo 'Hello,golang!';",
+		Status:       1,
+		Notify:       0,
+		NotifyEmail:  "",
+		Timeout:      0,
+		ExecuteTimes: 0,
+		PrevTime:     0,
+		CreateTime:   0,
+	}
+	Tasks = append(Tasks,task)
 
 	return
 }
