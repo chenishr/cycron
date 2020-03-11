@@ -45,12 +45,19 @@ func init()  {
 }
 
 func (m *Mailer)send(mailTo []string,subject string, body string ) error {
+	var(
+		// 邮件配置
+		mailConf 	conf.MailConf
+	)
+
+	mailConf = conf.GConfig.Mail
+
 	// 发送邮件配置
 	mailConn := map[string]string {
-		"user": conf.GConfig.Mail.User,
-		"pass": conf.GConfig.Mail.PassWord,
-		"host": conf.GConfig.Mail.Host,
-		"port": conf.GConfig.Mail.Port,
+		"user": mailConf.User,
+		"pass": mailConf.PassWord,
+		"host": mailConf.Host,
+		"port": mailConf.Port,
 	}
 
 	//转换端口类型为int

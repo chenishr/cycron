@@ -5,6 +5,7 @@ import (
 	"cycron/models"
 	"fmt"
 	"github.com/gorhill/cronexpr"
+	"strings"
 	"time"
 )
 
@@ -18,6 +19,8 @@ type Job struct {
 	cancelCtx 	context.Context 		// 任务command的context
 	cancelFunc 	context.CancelFunc		// 用于取消command执行的cancel函数
 	runningCount	int					// 当前正在执行的作业数
+	notify      	int					// 是否发送邮件通知
+	notifyEmail  	[]string			// 邮件通知列表
 }
 
 func InitFromTasks(tasks []*models.TaskMod) (jobs map[int]*Job, err error) {
@@ -57,13 +60,17 @@ func InitFromTasks(tasks []*models.TaskMod) (jobs map[int]*Job, err error) {
 			nextTime:   expr.Next(now),
 			cancelCtx:  ctx,
 			cancelFunc: cancelFunc,
-			runningCount: 0,
+			runningCount: 	0,
+			notify:			0,
+			notifyEmail:  nil,
 		}
 
 		// 至少得允许一个协程运行
 		if job.concurrent < 1 {
 			job.concurrent = 1
 		}
+
+		job.notifyEmail = strings.Split(task.NotifyEmail, "\n")
 
 		jobs[task.Id] = job
 	}

@@ -7,7 +7,7 @@ import (
 
 // 程序配置
 type Config struct {
-	Mail *MailConf `json"mail"`
+	Mail MailConf `json"mail"`
 }
 
 type MailConf struct {
