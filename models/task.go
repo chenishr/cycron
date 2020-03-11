@@ -11,7 +11,7 @@ type TaskMod struct {
 	Concurrent   	int
 	Command      	string
 	Status       	int
-	Notify       	int
+	Notify       	int					// 0 不通知；1 执行失败通知；2 执行结束通知
 	NotifyEmail  	string
 	Timeout      	int
 	ExecuteTimes 	int
@@ -78,8 +78,8 @@ func GetTasks() (Tasks []*TaskMod,err error) {
 		Concurrent:   1,
 		Command:      "uptime",
 		Status:       1,
-		Notify:       1,
-		NotifyEmail:  "chenishr@163.com\nchenishr@gmail.com",
+		Notify:       2,
+		NotifyEmail:  "chenishr@163.com",
 		Timeout:      0,
 		ExecuteTimes: 0,
 		PrevTime:     0,

@@ -10,12 +10,11 @@ type Scheduler struct {
 	jobs	map[int]*Job		// 需要调度的作业集合
 	resChan	chan *ExecResult	// 作业执行结果
 	running	bool				// 调度器是否已经启动
-	closeChan	chan int		// 通知关闭调度器相关的协程
 }
 
 // 任务执行结果
 type ExecResult struct {
-	job			*Job		// 执行的任务
+	info		*execInfo	// 执行的任务
 	output 		[]byte 		// 脚本输出
 	err 		error 		// 脚本错误原因
 	startTime 	time.Time 	// 启动时间
@@ -39,7 +38,6 @@ func init()  {
 	}
 
 	s.resChan = make(chan *ExecResult,100)
-	s.closeChan = make(chan int)
 
 	err = s.InitScheduler()
 	if err != nil {
@@ -97,7 +95,7 @@ func (s *Scheduler)loop() {
 	for{
 		now = time.Now()
 
-		fmt.Println("当前调度时间：" ,now)
+		//fmt.Println("当前调度时间：" ,now)
 
 		if len(s.jobs) == 0 {
 			waitTime = 1 * time.Second
@@ -113,7 +111,12 @@ func (s *Scheduler)loop() {
 					fmt.Println(job.taskName, "当前进行作业数", job.runningCount)
 
 					// 执行任务
-					GExecutor.ExecuteJob(job)
+					info := &execInfo{
+						job:      job,
+						PlanTime: job.nextTime,
+						RealTime: now,
+					}
+					GExecutor.ExecuteJob(info)
 				} else {
 					fmt.Println("任务[",job.taskName,"]协程启动数量将超过允许的", job.concurrent ,"个，本次被忽略")
 				}
@@ -129,8 +132,11 @@ func (s *Scheduler)loop() {
 
 		}
 
+		/*
 		fmt.Println("下次调度时间：" ,nearTime)
 		fmt.Println()
+
+		 */
 
 		// 睡眠100毫秒
 		select {
@@ -149,20 +155,22 @@ func (s *Scheduler)HandleEvent()  {
 		for {
 			// 睡眠100毫秒
 			select {
-			case <- s.closeChan:
-				// 收到关闭调度器的信息则退出
-				return
-
 			case res := <-s.resChan:
-				res.job.runningCount --
+				res.info.job.runningCount --
+
 				if res.err != nil {
 					errMsg = res.err.Error()
 				} else {
 					errMsg = ""
 				}
+				fmt.Println(res.info.job.taskName + "打印结果:" + string(res.output) + "打印错误：" + errMsg)
 
-				fmt.Println(res.job.taskName + "打印结果:" + string(res.output) + "打印错误：" + errMsg)
-				fmt.Println()
+				fmt.Println(res.info.job.notify)
+				// 发邮件通知
+				if (res.info.job.notify == 1 && res.err != nil) || res.info.job.notify == 2 {
+					fmt.Println("发邮件")
+					GMailer.OrgData(res)
+				}
 			}
 		}
 	}()
