@@ -17,6 +17,7 @@ type Job struct {
 	nextTime 	time.Time				// 下次调度时间
 	cancelCtx 	context.Context 		// 任务command的context
 	cancelFunc 	context.CancelFunc		// 用于取消command执行的cancel函数
+	runningCount	int					// 当前正在执行的作业数
 }
 
 func InitFromTasks(tasks []*models.TaskMod) (jobs map[int]*Job, err error) {
@@ -37,13 +38,14 @@ func InitFromTasks(tasks []*models.TaskMod) (jobs map[int]*Job, err error) {
 
 	now = time.Now()
 
-	for task,_ = range tasks {
+	for _,task = range tasks {
 		// 解析JOB的cron表达式
 		if expr, err = cronexpr.Parse(task.CronSpec); err != nil {
 			fmt.Println(task.TaskName,"表达式解析有误：",err)
 			continue;
 		}
 
+		// 强杀任务时需要用到
 		ctx,cancelFunc = context.WithCancel(context.TODO())
 
 		job = &Job{
@@ -55,7 +57,14 @@ func InitFromTasks(tasks []*models.TaskMod) (jobs map[int]*Job, err error) {
 			nextTime:   expr.Next(now),
 			cancelCtx:  ctx,
 			cancelFunc: cancelFunc,
+			runningCount: 0,
 		}
+
+		// 至少得允许一个协程运行
+		if job.concurrent < 1 {
+			job.concurrent = 1
+		}
+
 		jobs[task.Id] = job
 	}
 
