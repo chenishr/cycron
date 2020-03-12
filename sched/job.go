@@ -23,12 +23,6 @@ type Job struct {
 	notifyEmail  	[]string			// 邮件通知列表
 }
 
-type execInfo struct {
-	job		*Job
-	PlanTime time.Time // 理论上的调度时间
-	RealTime time.Time // 实际的调度时间
-}
-
 func InitFromTasks(tasks []*models.TaskMod) (jobs map[int]*Job, err error) {
 	var (
 		task 	*models.TaskMod

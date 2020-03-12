@@ -14,7 +14,7 @@ type MailConf struct {
 	User 		string `json"user"`
 	Host 		string `json"host"`
 	PassWord	string `json"password"`
-	Port		string `json"port"`
+	Port		int `json"port"`
 }
 
 var (

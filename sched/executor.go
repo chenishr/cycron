@@ -15,31 +15,25 @@ var (
 )
 
 // 执行一个任务
-func (executor *Executor) ExecuteJob(info *execInfo) {
+func (executor *Executor) ExecuteJob(result *ExecResult) {
 	go func() {
 		var (
-			result *ExecResult
 			cmd *exec.Cmd
 			err error
 			output []byte
 		)
 
-		result = &ExecResult{
-			info:		info,
-			output:    	nil,
-			err:       	nil,
-			startTime: 	time.Now(),
-			endTime:   	time.Now(),
-		}
+		result.startTime 	= time.Now()
+		result.endTime		= time.Now()
 
 		// 任务结果
 		// 执行shell命令
-		fmt.Println("执行器开始执行" ,info.job.taskName,time.Now())
-		cmd = exec.CommandContext(info.job.cancelCtx,"/bin/bash","-c",info.job.command)
+		fmt.Println("执行器开始执行" ,result.job.taskName,time.Now())
+		cmd = exec.CommandContext(result.job.cancelCtx,"/bin/bash","-c",result.job.command)
 
 		// 执行并捕获输出
 		output, err = cmd.CombinedOutput()
-		fmt.Println("执行器结束执行" ,info.job.taskName,time.Now())
+		fmt.Println("执行器结束执行" ,result.job.taskName,time.Now())
 
 		// 记录任务结束时间
 		result.endTime = time.Now()

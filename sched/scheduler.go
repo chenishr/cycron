@@ -14,9 +14,11 @@ type Scheduler struct {
 
 // 任务执行结果
 type ExecResult struct {
-	info		*execInfo	// 执行的任务
+	job		*Job		// 执行的任务
 	output 		[]byte 		// 脚本输出
 	err 		error 		// 脚本错误原因
+	planTime 	time.Time 	// 理论上的调度时间
+	realTime 	time.Time 	// 实际的调度时间
 	startTime 	time.Time 	// 启动时间
 	endTime 	time.Time 	// 结束时间
 }
@@ -111,12 +113,16 @@ func (s *Scheduler)loop() {
 					fmt.Println(job.taskName, "当前进行作业数", job.runningCount)
 
 					// 执行任务
-					info := &execInfo{
-						job:      job,
-						PlanTime: job.nextTime,
-						RealTime: now,
+					res := &ExecResult{
+						job:      	job,
+						output:    nil,
+						err:       nil,
+						planTime: job.nextTime,
+						realTime: now,
+						startTime: time.Time{},
+						endTime:   time.Time{},
 					}
-					GExecutor.ExecuteJob(info)
+					GExecutor.ExecuteJob(res)
 				} else {
 					fmt.Println("任务[",job.taskName,"]协程启动数量将超过允许的", job.concurrent ,"个，本次被忽略")
 				}
@@ -156,19 +162,17 @@ func (s *Scheduler)HandleEvent()  {
 			// 睡眠100毫秒
 			select {
 			case res := <-s.resChan:
-				res.info.job.runningCount --
+				res.job.runningCount --
 
 				if res.err != nil {
 					errMsg = res.err.Error()
 				} else {
 					errMsg = ""
 				}
-				fmt.Println(res.info.job.taskName + "打印结果:" + string(res.output) + "打印错误：" + errMsg)
+				fmt.Println(res.job.taskName + "打印结果:" + string(res.output) + "打印错误：" + errMsg)
 
-				fmt.Println(res.info.job.notify)
 				// 发邮件通知
-				if (res.info.job.notify == 1 && res.err != nil) || res.info.job.notify == 2 {
-					fmt.Println("发邮件")
+				if (res.job.notify == 1 && res.err != nil) || res.job.notify == 2 {
 					GMailer.OrgData(res)
 				}
 			}
