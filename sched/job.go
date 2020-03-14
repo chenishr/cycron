@@ -10,7 +10,7 @@ import (
 )
 
 type Job struct {
-	taskId 		int
+	taskId 		string
 	taskName	string
 	expr 		*cronexpr.Expression	// 解析好的cronexpr表达式
 	concurrent  int						// 并发执行控制
@@ -23,7 +23,7 @@ type Job struct {
 	notifyEmail  	[]string			// 邮件通知列表
 }
 
-func InitFromTasks(tasks []*models.TaskMod) (jobs map[int]*Job, err error) {
+func InitFromTasks(tasks []*models.TaskMod) (jobs map[string]*Job, err error) {
 	var (
 		task 	*models.TaskMod
 		job		*Job
@@ -37,7 +37,7 @@ func InitFromTasks(tasks []*models.TaskMod) (jobs map[int]*Job, err error) {
 		return
 	}
 
-	jobs = make(map[int]*Job)
+	jobs = make(map[string]*Job)
 
 	now = time.Now()
 
@@ -52,7 +52,7 @@ func InitFromTasks(tasks []*models.TaskMod) (jobs map[int]*Job, err error) {
 		ctx,cancelFunc = context.WithCancel(context.TODO())
 
 		job = &Job{
-			taskId:     task.Id,
+			taskId:     task.Id.Hex(),
 			taskName:   task.TaskName,
 			expr:       expr,
 			concurrent: task.Concurrent,
@@ -72,7 +72,7 @@ func InitFromTasks(tasks []*models.TaskMod) (jobs map[int]*Job, err error) {
 
 		job.notifyEmail = strings.Split(task.NotifyEmail, "\n")
 
-		jobs[task.Id] = job
+		jobs[task.Id.String()] = job
 	}
 
 	return

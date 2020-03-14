@@ -1,5 +1,8 @@
 package models
 
+import "go.mongodb.org/mongo-driver/bson/primitive"
+
+// 任务完成状态
 const (
 	TASK_SUCCESS 	= 0  	// 任务执行成功
 	TASK_ERROR   	= 1 	// 任务执行出错
@@ -8,91 +11,20 @@ const (
 )
 
 type TaskMod struct {
-	Id           	int
-	UserId       	int
-	GroupId      	int
-	TaskName     	string
-	TaskType     	int
-	Description  	string
-	CronSpec     	string
-	Concurrent   	int
-	Command      	string
-	Status       	int
-	Notify       	int					// 0 不通知；1 执行失败通知；2 执行结束通知
-	NotifyEmail  	string
-	Timeout      	int
-	ExecuteTimes 	int
-	PrevTime     	int64
-	CreateTime   	int64
-}
-
-/**
-	获取待执行的任务
- */
-func GetTasks() (Tasks []*TaskMod,err error) {
-	var (
-		task *TaskMod
-	)
-
-	task = &TaskMod{
-		Id:           1,
-		UserId:       1,
-		GroupId:      1,
-		TaskName:     "第 1 个任务",
-		TaskType:     0,
-		Description:  "第 1 个任务",
-		CronSpec:     "*/5 * * * * * *",
-		Concurrent:   1,
-		Command:      "echo 'Hello,World!';",
-		Status:       1,
-		Notify:       1,
-		NotifyEmail:  "chenishr@163.com",
-		Timeout:      0,
-		ExecuteTimes: 0,
-		PrevTime:     0,
-		CreateTime:   0,
-	}
-	Tasks = append(Tasks,task)
-
-	task = &TaskMod{
-		Id:           2,
-		UserId:       1,
-		GroupId:      1,
-		TaskName:     "第 2 个任务",
-		TaskType:     0,
-		Description:  "第 2 个任务",
-		CronSpec:     "10 */5 * * * * *",
-		Concurrent:   1,
-		Command:      "ec 'Hello,golang!';",
-		Status:       1,
-		Notify:       0,
-		NotifyEmail:  "",
-		Timeout:      0,
-		ExecuteTimes: 0,
-		PrevTime:     0,
-		CreateTime:   0,
-	}
-	Tasks = append(Tasks,task)
-
-	task = &TaskMod{
-		Id:           3,
-		UserId:       1,
-		GroupId:      1,
-		TaskName:     "第 3 个任务",
-		TaskType:     0,
-		Description:  "第 3 个任务",
-		CronSpec:     "5 */10  * * * * *",
-		Concurrent:   1,
-		Command:      "uptime",
-		Status:       1,
-		Notify:       1,
-		NotifyEmail:  "chenishr@163.com",
-		Timeout:      0,
-		ExecuteTimes: 0,
-		PrevTime:     0,
-		CreateTime:   0,
-	}
-	Tasks = append(Tasks,task)
-
-	return
+	Id           	primitive.ObjectID 	`bson:"_id"`
+	UserId       	int					`bson:"user_id"`
+	GroupId      	int					`bson:"group_id"`
+	TaskName     	string				`bson:"task_name"`
+	TaskType     	int					`bson:"task_type"`
+	Description  	string				`bson:"description"`
+	CronSpec     	string				`bson:"cron_spec"`
+	Concurrent   	int					`bson:"concurrent"`
+	Command      	string				`bson:"command"`
+	Status       	int					`bson:"status"`					// 0 停止；1 启动
+	Notify       	int					`bson:"notify"`					// 0 不通知；1 执行失败通知；2 执行结束通知
+	NotifyEmail  	string				`bson:"notify_email"`
+	Timeout      	int					`bson:"timeout"`
+	ExecuteTimes 	int					`bson:"execute_times"`
+	PrevTime     	int64				`bson:"prev_time"`
+	CreateTime   	int64				`bson:"create_time"`
 }

@@ -10,6 +10,7 @@ type Config struct {
 	Mail MailConf 	`json:"mail"`
 	Mongo MongoConf `json:"mongo"`
 	Logger LoggerConf `json:"logger"`
+	Models ModelsConf	`json:"models"`
 }
 
 type MailConf struct {
@@ -27,8 +28,12 @@ type MongoConf struct {
 
 type LoggerConf struct {
 	BatchSize 		int 	`json:"batchsize"`
+}
+
+type ModelsConf struct {
 	Db 				string 	`json:"db"`
 	TaskLog 		string 	`json:"taskLog"`
+	Task 			string 	`json:"task"`
 }
 
 var (

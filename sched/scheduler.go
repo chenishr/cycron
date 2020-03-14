@@ -1,13 +1,14 @@
 package sched
 
 import (
+	"cycron/mgr"
 	"cycron/models"
 	"fmt"
 	"time"
 )
 
 type Scheduler struct {
-	jobs	map[int]*Job		// 需要调度的作业集合
+	jobs	map[string]*Job		// 需要调度的作业集合
 	resChan	chan *ExecResult	// 作业执行结果
 	running	bool				// 调度器是否已经启动
 }
@@ -65,7 +66,7 @@ func (s *Scheduler)InitScheduler()(err error) {
 	)
 
 	// 获取需要调度的任务
-	tasks,err = models.GetTasks()
+	tasks,err = mgr.GTaskMgr.GetTasks()
 	if err != nil{
 		return
 	}
@@ -118,7 +119,7 @@ func (s *Scheduler)loop() {
 						job:      	job,
 						output:    	nil,
 						err:       	nil,
-						status: 	0,
+						status: 	models.TASK_SUCCESS,
 						planTime: 	job.nextTime,
 						realTime: 	now,
 						startTime: 	time.Time{},

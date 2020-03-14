@@ -3,7 +3,9 @@ package sched
 import (
 	"context"
 	"cycron/conf"
+	"cycron/models"
 	"fmt"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"time"
@@ -12,22 +14,8 @@ import (
 type Logger struct {
 	client 			*mongo.Client
 	logCollection 	*mongo.Collection
-	logChan 		chan *TaskLog
+	logChan 		chan *models.TaskLog
 	autoCommitChan 	chan *LogBatch
-}
-
-// 任务执行日志
-type TaskLog struct {
-	TaskId      	int		`json:"task_id" bson:"task_id"`
-	Command 		string 	`json:"command" bson:"command"` // 脚本命令
-	Status      	int		`json:"status" bson:"status"`
-	ProcessTime 	int		`json:"process_time" bson:"process_time"`
-	Output 			string 	`json:"output" bson:"output"`	// 脚本输出
-	Err 			string 	`json:"err" bson:"err"` // 错误原因
-	PlanTime 		int64 	`json:"plan_time" bson:"plan_time"`	// 理论上的调度时间
-	RealTime 		int64 	`json:"real_time" bson:"real_time"`	// 实际的调度时间
-	StartTime 		int64 	`json:"start_time" bson:"start_time"` // 启动时间
-	EndTime 		int64 	`json:"end_time" bson:"end_time"` 	// 结束时间
 }
 
 // 日志批次
@@ -42,13 +30,16 @@ var (
 
 // 批量写入日志
 func (l *Logger) saveLogs(batch *LogBatch) {
-	l.logCollection.InsertMany(context.TODO(), batch.Logs)
+	_,err := l.logCollection.InsertMany(context.TODO(), batch.Logs)
+	if err != nil {
+		fmt.Println("保存日志失败：" , err)
+	}
 }
 
 // 日志存储协程
 func (l *Logger) writeLoop() {
 	var (
-		log *TaskLog
+		log *models.TaskLog
 		logBatch *LogBatch // 当前的批次
 		commitTimer *time.Timer
 		timeoutBatch *LogBatch // 超时批次
@@ -99,13 +90,13 @@ func init() {
 	var (
 		client *mongo.Client
 		mongoConf conf.MongoConf
-		loggerConf conf.LoggerConf
+		modelsConf	conf.ModelsConf
 		ctx context.Context
 		err error
 	)
 
 	mongoConf = conf.GConfig.Mongo
-	loggerConf = conf.GConfig.Logger
+	modelsConf = conf.GConfig.Models
 
 	ctx, _ = context.WithTimeout(context.TODO(), time.Duration(mongoConf.ConnectTimeout) * time.Millisecond)
 
@@ -122,8 +113,8 @@ func init() {
 	//   选择db和collection
 	GLogger = &Logger{
 		client: client,
-		logCollection: client.Database(loggerConf.Db).Collection(loggerConf.TaskLog),
-		logChan: make(chan *TaskLog, 1000),
+		logCollection: client.Database(modelsConf.Db).Collection(modelsConf.TaskLog),
+		logChan: make(chan *models.TaskLog, 1000),
 		autoCommitChan: make(chan *LogBatch, 1000),
 	}
 
@@ -133,7 +124,7 @@ func init() {
 }
 
 // 发送日志
-func (l *Logger) Append(taskLog *TaskLog) {
+func (l *Logger) Append(taskLog *models.TaskLog) {
 	select {
 	case l.logChan <- taskLog:
 	default:
@@ -144,7 +135,7 @@ func (l *Logger) Append(taskLog *TaskLog) {
 
 func (l *Logger) OrgData(res *ExecResult)  {
 	var (
-		taskLog *TaskLog
+		taskLog *models.TaskLog
 		errMsg string
 	)
 
@@ -155,8 +146,10 @@ func (l *Logger) OrgData(res *ExecResult)  {
 		errMsg = ""
 	}
 
-	taskLog = &TaskLog{
-		TaskId:      res.job.taskId,
+	id,_ := primitive.ObjectIDFromHex(res.job.taskId)
+	taskLog = &models.TaskLog{
+		Id:			 primitive.NewObjectID(),
+		TaskId:      id,
 		Command:     res.job.command,
 		Status:      res.status,
 		ProcessTime: psTime,
