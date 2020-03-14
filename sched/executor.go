@@ -1,6 +1,7 @@
 package sched
 
 import (
+	"cycron/models"
 	"fmt"
 	"os/exec"
 	"time"
@@ -39,6 +40,10 @@ func (executor *Executor) ExecuteJob(result *ExecResult) {
 		result.endTime = time.Now()
 		result.output = output
 		result.err = err
+
+		if err != nil{
+			result.status = models.TASK_ERROR
+		}
 
 		// 上报执行结果
 		GScheduler.PushJobResult(result)

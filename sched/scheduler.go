@@ -17,6 +17,7 @@ type ExecResult struct {
 	job		*Job		// 执行的任务
 	output 		[]byte 		// 脚本输出
 	err 		error 		// 脚本错误原因
+	status		int 		//
 	planTime 	time.Time 	// 理论上的调度时间
 	realTime 	time.Time 	// 实际的调度时间
 	startTime 	time.Time 	// 启动时间
@@ -115,12 +116,13 @@ func (s *Scheduler)loop() {
 					// 执行任务
 					res := &ExecResult{
 						job:      	job,
-						output:    nil,
-						err:       nil,
-						planTime: job.nextTime,
-						realTime: now,
-						startTime: time.Time{},
-						endTime:   time.Time{},
+						output:    	nil,
+						err:       	nil,
+						status: 	0,
+						planTime: 	job.nextTime,
+						realTime: 	now,
+						startTime: 	time.Time{},
+						endTime:   	time.Time{},
 					}
 					GExecutor.ExecuteJob(res)
 				} else {
@@ -175,6 +177,9 @@ func (s *Scheduler)HandleEvent()  {
 				if (res.job.notify == 1 && res.err != nil) || res.job.notify == 2 {
 					GMailer.OrgData(res)
 				}
+
+				// 保存执行日记
+				GLogger.OrgData(res)
 			}
 		}
 	}()

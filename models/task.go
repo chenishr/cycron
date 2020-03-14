@@ -1,5 +1,12 @@
 package models
 
+const (
+	TASK_SUCCESS 	= 0  	// 任务执行成功
+	TASK_ERROR   	= 1 	// 任务执行出错
+	TASK_TIMEOUT 	= 2 	// 任务执行超时
+	TASK_CANCEL 	= 3 	// 任务被取消
+)
+
 type TaskMod struct {
 	Id           	int
 	UserId       	int
@@ -36,7 +43,7 @@ func GetTasks() (Tasks []*TaskMod,err error) {
 		Description:  "第 1 个任务",
 		CronSpec:     "*/5 * * * * * *",
 		Concurrent:   1,
-		Command:      "ech 'Hello,World!';",
+		Command:      "echo 'Hello,World!';",
 		Status:       1,
 		Notify:       1,
 		NotifyEmail:  "chenishr@163.com",
@@ -74,11 +81,11 @@ func GetTasks() (Tasks []*TaskMod,err error) {
 		TaskName:     "第 3 个任务",
 		TaskType:     0,
 		Description:  "第 3 个任务",
-		CronSpec:     "*/10 * * * * * *",
+		CronSpec:     "5 */10  * * * * *",
 		Concurrent:   1,
 		Command:      "uptime",
 		Status:       1,
-		Notify:       2,
+		Notify:       1,
 		NotifyEmail:  "chenishr@163.com",
 		Timeout:      0,
 		ExecuteTimes: 0,

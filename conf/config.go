@@ -7,14 +7,28 @@ import (
 
 // 程序配置
 type Config struct {
-	Mail MailConf `json"mail"`
+	Mail MailConf 	`json:"mail"`
+	Mongo MongoConf `json:"mongo"`
+	Logger LoggerConf `json:"logger"`
 }
 
 type MailConf struct {
-	User 		string `json"user"`
-	Host 		string `json"host"`
-	PassWord	string `json"password"`
-	Port		int `json"port"`
+	User 		string 	`json:"user"`
+	Host 		string 	`json:"host"`
+	PassWord	string 	`json:"password"`
+	Port		int 	`json:"port"`
+}
+
+type MongoConf struct {
+	Uri 			string 	`json:"uri"`
+	ConnectTimeout 	int 	`json:"connectTimeout"`
+	CommitTimeout 	int 	`json:"commitTimeout"`
+}
+
+type LoggerConf struct {
+	BatchSize 		int 	`json:"batchsize"`
+	Db 				string 	`json:"db"`
+	TaskLog 		string 	`json:"taskLog"`
 }
 
 var (
