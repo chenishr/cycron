@@ -30,7 +30,7 @@ var (
 
 func init() {
 	var (
-		s   *Scheduler
+		s *Scheduler
 	)
 
 	s = &Scheduler{
@@ -95,7 +95,7 @@ func (s *Scheduler) loop() {
 		//fmt.Println("当前调度时间：" ,now)
 
 		if len(s.jobs) == 0 {
-			fmt.Println("暂时没有任务执行",now)
+			fmt.Println("暂时没有任务执行", now)
 			waitTime = 1 * time.Second
 		}
 

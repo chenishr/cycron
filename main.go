@@ -10,23 +10,40 @@ import (
 )
 
 func main() {
-	var(
+	var (
 		err error
 	)
 	fmt.Println("这是一个定时任务管理程序")
 
-	//addTask()
+	addTask()
 	addUser()
+	addGroup()
 
 	err = sched.GScheduler.InitScheduler()
 	if err != nil {
-		fmt.Println("调度器启动失败：",err)
+		fmt.Println("调度器启动失败：", err)
 	}
 
 	sched.GScheduler.Print()
 }
 
-func addUser()  {
+func addGroup() {
+	taskGroup := &mod.TaskGroupMod{
+		Id:          primitive.NewObjectID(),
+		UserId:      primitive.ObjectID{},
+		GroupName:   "默认分组",
+		Description: "默认分组",
+		CreateTime:  time.Now().Unix(),
+		UpdateTime:  time.Now().Unix(),
+	}
+
+	err := mod.GTaskGroupMgr.AddGroup(taskGroup)
+	if err != nil {
+		fmt.Println("添加任务分组失败：", err)
+	}
+}
+
+func addUser() {
 	user := &mod.UserMod{
 		Id:            primitive.NewObjectID(),
 		UserName:      "chenishr",
@@ -39,16 +56,16 @@ func addUser()  {
 		UpdateTime:    time.Now().Unix(),
 	}
 
-	user.Password = libs.Md5("123456" + string(user.CreateTime));
+	user.Password = libs.Md5("123456" + string(user.CreateTime))
 
 	err := mod.GUserMgr.AddUser(user)
 	if err != nil {
-		fmt.Println("添加用户失败：",err)
+		fmt.Println("添加用户失败：", err)
 	}
 }
 
-func addTask()  {
-	var(
+func addTask() {
+	var (
 		err error
 	)
 
@@ -72,6 +89,6 @@ func addTask()  {
 	}
 	err = mod.GTaskMgr.AddTask(task)
 	if err != nil {
-		fmt.Println("添加任务失败：",err)
+		fmt.Println("添加任务失败：", err)
 	}
 }

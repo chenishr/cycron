@@ -31,10 +31,11 @@ type LoggerConf struct {
 }
 
 type ModelsConf struct {
-	Db      string `json:"db"`
-	TaskLog string `json:"taskLog"`
-	Task    string `json:"task"`
-	User    string `json:"user"`
+	Db        string `json:"db"`
+	Task      string `json:"task"`
+	TaskGroup string `json:"taskGroup"`
+	TaskLog   string `json:"taskLog"`
+	User      string `json:"user"`
 }
 
 var (
