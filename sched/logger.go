@@ -1,26 +1,21 @@
 package sched
 
 import (
-	"context"
 	"cycron/conf"
-	"cycron/models"
+	"cycron/mod"
 	"fmt"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 	"time"
 )
 
 type Logger struct {
-	client 			*mongo.Client
-	logCollection 	*mongo.Collection
-	logChan 		chan *models.TaskLog
-	autoCommitChan 	chan *LogBatch
+	logChan        chan *mod.TaskLogMod
+	autoCommitChan chan *LogBatch
 }
 
 // 日志批次
 type LogBatch struct {
-	Logs []interface{}	// 多条日志
+	Logs []interface{} // 多条日志
 }
 
 var (
@@ -30,29 +25,29 @@ var (
 
 // 批量写入日志
 func (l *Logger) saveLogs(batch *LogBatch) {
-	_,err := l.logCollection.InsertMany(context.TODO(), batch.Logs)
+	err := mod.GTaskLogMgr.InsertMany(batch.Logs)
 	if err != nil {
-		fmt.Println("保存日志失败：" , err)
+		fmt.Println("保存日志失败：", err)
 	}
 }
 
 // 日志存储协程
 func (l *Logger) writeLoop() {
 	var (
-		log *models.TaskLog
-		logBatch *LogBatch // 当前的批次
-		commitTimer *time.Timer
+		log          *mod.TaskLogMod
+		logBatch     *LogBatch // 当前的批次
+		commitTimer  *time.Timer
 		timeoutBatch *LogBatch // 超时批次
 	)
 
 	for {
 		select {
-		case log = <- l.logChan:
+		case log = <-l.logChan:
 			if logBatch == nil {
 				logBatch = &LogBatch{}
 				// 让这个批次超时自动提交(给1秒的时间）
 				commitTimer = time.AfterFunc(
-					time.Duration(conf.GConfig.Mongo.CommitTimeout) * time.Millisecond,
+					time.Duration(conf.GConfig.Mongo.CommitTimeout)*time.Millisecond,
 					func(batch *LogBatch) func() {
 						return func() {
 							l.autoCommitChan <- batch
@@ -73,7 +68,7 @@ func (l *Logger) writeLoop() {
 				// 取消定时器
 				commitTimer.Stop()
 			}
-		case timeoutBatch = <- l.autoCommitChan: // 过期的批次
+		case timeoutBatch = <-l.autoCommitChan: // 过期的批次
 			// 判断过期批次是否仍旧是当前的批次
 			if timeoutBatch != logBatch {
 				continue // 跳过已经被提交的批次
@@ -87,34 +82,8 @@ func (l *Logger) writeLoop() {
 }
 
 func init() {
-	var (
-		client *mongo.Client
-		mongoConf conf.MongoConf
-		modelsConf	conf.ModelsConf
-		ctx context.Context
-		err error
-	)
-
-	mongoConf = conf.GConfig.Mongo
-	modelsConf = conf.GConfig.Models
-
-	ctx, _ = context.WithTimeout(context.TODO(), time.Duration(mongoConf.ConnectTimeout) * time.Millisecond)
-
-	// 建立mongodb连接
-	fmt.Println("建立mongodb连接")
-	if client, err = mongo.Connect(
-		ctx,
-		options.Client().ApplyURI(mongoConf.Uri)); err != nil {
-		fmt.Println("链接 MongoDB 失败：",err)
-		return
-	}
-	fmt.Println("建立mongodb连接 成功")
-
-	//   选择db和collection
 	GLogger = &Logger{
-		client: client,
-		logCollection: client.Database(modelsConf.Db).Collection(modelsConf.TaskLog),
-		logChan: make(chan *models.TaskLog, 1000),
+		logChan:        make(chan *mod.TaskLogMod, 1000),
 		autoCommitChan: make(chan *LogBatch, 1000),
 	}
 
@@ -124,7 +93,7 @@ func init() {
 }
 
 // 发送日志
-func (l *Logger) Append(taskLog *models.TaskLog) {
+func (l *Logger) Append(taskLog *mod.TaskLogMod) {
 	select {
 	case l.logChan <- taskLog:
 	default:
@@ -133,22 +102,22 @@ func (l *Logger) Append(taskLog *models.TaskLog) {
 	}
 }
 
-func (l *Logger) OrgData(res *ExecResult)  {
+func (l *Logger) OrgData(res *ExecResult) {
 	var (
-		taskLog *models.TaskLog
-		errMsg string
+		taskLog *mod.TaskLogMod
+		errMsg  string
 	)
 
-	psTime 	:= int(res.endTime.Sub(res.realTime) / time.Millisecond)
+	psTime := int(res.endTime.Sub(res.realTime) / time.Millisecond)
 	if res.err != nil {
 		errMsg = res.err.Error()
-	}else{
+	} else {
 		errMsg = ""
 	}
 
-	id,_ := primitive.ObjectIDFromHex(res.job.taskId)
-	taskLog = &models.TaskLog{
-		Id:			 primitive.NewObjectID(),
+	id, _ := primitive.ObjectIDFromHex(res.job.taskId)
+	taskLog = &mod.TaskLogMod{
+		Id:          primitive.NewObjectID(),
 		TaskId:      id,
 		Command:     res.job.command,
 		Status:      res.status,

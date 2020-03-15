@@ -1,38 +1,36 @@
 package sched
 
 import (
-	"cycron/mgr"
-	"cycron/models"
+	"cycron/mod"
 	"fmt"
 	"time"
 )
 
 type Scheduler struct {
-	jobs	map[string]*Job		// 需要调度的作业集合
-	resChan	chan *ExecResult	// 作业执行结果
-	running	bool				// 调度器是否已经启动
+	jobs    map[string]*Job  // 需要调度的作业集合
+	resChan chan *ExecResult // 作业执行结果
+	running bool             // 调度器是否已经启动
 }
 
 // 任务执行结果
 type ExecResult struct {
-	job		*Job		// 执行的任务
-	output 		[]byte 		// 脚本输出
-	err 		error 		// 脚本错误原因
-	status		int 		//
-	planTime 	time.Time 	// 理论上的调度时间
-	realTime 	time.Time 	// 实际的调度时间
-	startTime 	time.Time 	// 启动时间
-	endTime 	time.Time 	// 结束时间
+	job       *Job      // 执行的任务
+	output    []byte    // 脚本输出
+	err       error     // 脚本错误原因
+	status    int       //
+	planTime  time.Time // 理论上的调度时间
+	realTime  time.Time // 实际的调度时间
+	startTime time.Time // 启动时间
+	endTime   time.Time // 结束时间
 }
 
-var(
-	GScheduler * Scheduler
+var (
+	GScheduler *Scheduler
 )
 
-func init()  {
+func init() {
 	var (
-		s 		*Scheduler
-		err		error
+		s   *Scheduler
 	)
 
 	s = &Scheduler{
@@ -41,46 +39,41 @@ func init()  {
 		running: false,
 	}
 
-	s.resChan = make(chan *ExecResult,100)
-
-	err = s.InitScheduler()
-	if err != nil {
-		fmt.Println("初始化调度器失败",err)
-	}
+	s.resChan = make(chan *ExecResult, 100)
 
 	GScheduler = s
-
-	// 启动任务调度循环
-	s.loop()
 }
 
-func (s *Scheduler)Print() {
-	for id,job := range s.jobs {
-		fmt.Println(id,job)
+func (s *Scheduler) Print() {
+	for id, job := range s.jobs {
+		fmt.Println(id, job)
 	}
 }
 
-func (s *Scheduler)InitScheduler()(err error) {
+func (s *Scheduler) InitScheduler() (err error) {
 	var (
-		tasks 	[]*models.TaskMod
+		tasks []*mod.TaskMod
 	)
 
 	// 获取需要调度的任务
-	tasks,err = mgr.GTaskMgr.GetTasks()
-	if err != nil{
+	tasks, err = mod.GTaskMgr.GetTasks()
+	if err != nil {
 		return
 	}
 
 	// 初始化调度队列
-	s.jobs,err = InitFromTasks(tasks)
+	s.jobs, err = InitFromTasks(tasks)
 	if err != nil {
 		return
 	}
 
+	// 启动任务调度循环
+	s.loop()
+
 	return
 }
 
-func (s *Scheduler)loop() {
+func (s *Scheduler) loop() {
 	if s.running {
 		return
 	}
@@ -90,18 +83,19 @@ func (s *Scheduler)loop() {
 	// 启动事件处理协程
 	s.HandleEvent()
 
-	var(
-		now	time.Time
+	var (
+		now      time.Time
 		nearTime *time.Time
 		waitTime time.Duration
 	)
 
-	for{
+	for {
 		now = time.Now()
 
 		//fmt.Println("当前调度时间：" ,now)
 
 		if len(s.jobs) == 0 {
+			fmt.Println("暂时没有任务执行",now)
 			waitTime = 1 * time.Second
 		}
 
@@ -110,24 +104,24 @@ func (s *Scheduler)loop() {
 
 				// 控制并发
 				if job.runningCount < job.concurrent {
-					job.runningCount ++
+					job.runningCount++
 
 					fmt.Println(job.taskName, "当前进行作业数", job.runningCount)
 
 					// 执行任务
 					res := &ExecResult{
-						job:      	job,
-						output:    	nil,
-						err:       	nil,
-						status: 	models.TASK_SUCCESS,
-						planTime: 	job.nextTime,
-						realTime: 	now,
-						startTime: 	time.Time{},
-						endTime:   	time.Time{},
+						job:       job,
+						output:    nil,
+						err:       nil,
+						status:    mod.TASK_SUCCESS,
+						planTime:  job.nextTime,
+						realTime:  now,
+						startTime: time.Time{},
+						endTime:   time.Time{},
 					}
 					GExecutor.ExecuteJob(res)
 				} else {
-					fmt.Println("任务[",job.taskName,"]协程启动数量将超过允许的", job.concurrent ,"个，本次被忽略")
+					fmt.Println("任务[", job.taskName, "]协程启动数量将超过允许的", job.concurrent, "个，本次被忽略")
 				}
 
 				// 每次调度之后都需要更新下次执行时间
@@ -142,22 +136,22 @@ func (s *Scheduler)loop() {
 		}
 
 		/*
-		fmt.Println("下次调度时间：" ,nearTime)
-		fmt.Println()
+			fmt.Println("下次调度时间：" ,nearTime)
+			fmt.Println()
 
-		 */
+		*/
 
 		// 睡眠100毫秒
 		select {
-		case <- time.NewTimer(waitTime).C:	// 将在100毫秒可读，返回
+		case <-time.NewTimer(waitTime).C: // 将在100毫秒可读，返回
 			nearTime = nil
 		}
 	}
 }
 
-func (s *Scheduler)HandleEvent()  {
+func (s *Scheduler) HandleEvent() {
 	go func() {
-		var(
+		var (
 			errMsg string
 		)
 
@@ -165,7 +159,7 @@ func (s *Scheduler)HandleEvent()  {
 			// 睡眠100毫秒
 			select {
 			case res := <-s.resChan:
-				res.job.runningCount --
+				res.job.runningCount--
 
 				if res.err != nil {
 					errMsg = res.err.Error()
