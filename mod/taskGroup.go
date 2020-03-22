@@ -5,17 +5,16 @@ import (
 	"cycron/conf"
 	"cycron/dbs"
 	"fmt"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type TaskGroupMod struct {
-	Id          primitive.ObjectID
-	UserId      primitive.ObjectID
-	GroupName   string
-	Description string
-	CreateTime  int64
-	UpdateTime  int64
+	Id          int64  `bson:"_id"`
+	UserId      int64  `bson:"user_id"`
+	GroupName   string `bson:"group_name"`
+	Description string `bson:"description"`
+	CreateTime  int64  `bson:"create_time"`
+	UpdateTime  int64  `bson:"update_time"`
 }
 
 type TaskGroupMgr struct {
@@ -42,6 +41,6 @@ func (g *TaskGroupMgr) AddGroup(taskGroup *TaskGroupMod) (err error) {
 		return
 	}
 
-	fmt.Println(" 插入的 ID：", result)
+	fmt.Println(" 插入的 task_group ID：", result)
 	return
 }

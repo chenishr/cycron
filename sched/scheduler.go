@@ -3,13 +3,15 @@ package sched
 import (
 	"cycron/mod"
 	"fmt"
+	"go.mongodb.org/mongo-driver/bson"
 	"time"
 )
 
 type Scheduler struct {
-	jobs    map[string]*Job  // 需要调度的作业集合
-	resChan chan *ExecResult // 作业执行结果
-	running bool             // 调度器是否已经启动
+	jobs       map[int64]*Job   // 需要调度的作业集合
+	addJobChan chan bool        // 通知调度器有新任务添加
+	resChan    chan *ExecResult // 作业执行结果
+	running    bool             // 调度器是否已经启动
 }
 
 // 任务执行结果
@@ -40,6 +42,9 @@ func init() {
 	}
 
 	s.resChan = make(chan *ExecResult, 100)
+	s.jobs = make(map[int64]*Job, 100)
+	s.addJobChan = make(chan bool, 10)
+	fmt.Println("初始化调度队列")
 
 	GScheduler = s
 }
@@ -53,6 +58,7 @@ func (s *Scheduler) Print() {
 func (s *Scheduler) InitScheduler() (err error) {
 	var (
 		tasks []*mod.TaskMod
+		jobs  map[int64]*Job
 	)
 
 	// 获取需要调度的任务
@@ -62,13 +68,74 @@ func (s *Scheduler) InitScheduler() (err error) {
 	}
 
 	// 初始化调度队列
-	s.jobs, err = InitFromTasks(tasks)
+	jobs, err = InitFromTasks(tasks)
 	if err != nil {
 		return
 	}
 
+	// 任务不为空才进行赋值
+	if jobs != nil {
+		s.jobs = jobs
+	}
+
 	// 启动任务调度循环
 	s.loop()
+
+	return
+}
+
+func (s *Scheduler) RemoveJob(taskId int64) {
+	var (
+		exists bool
+		oldJob *Job
+	)
+	if s.running == false {
+		return
+	}
+
+	// 检查该任务是否在调度队列中
+	if oldJob, exists = s.jobs[taskId]; !exists {
+		return
+	}
+
+	// 终止正在调度的任务
+	if oldJob.runningCount > 0 {
+		fmt.Println("触发取消中的", oldJob.runningCount, "个任务")
+		oldJob.cancelFunc()
+	}
+
+	// 从调度队列中删除任务
+	delete(s.jobs, taskId)
+
+	return
+}
+
+func (s *Scheduler) AddJob(task *mod.TaskMod, readd bool) (err error) {
+	var (
+		exists bool
+		job    *Job
+	)
+	if s.running == false {
+		return
+	}
+
+	// 检查该任务是否在调度队列中
+	if _, exists = s.jobs[task.Id]; exists == true {
+		if readd {
+			// 是否需要丢弃从新加入
+			s.RemoveJob(task.Id)
+		} else {
+			return
+		}
+	}
+
+	if job, err = NewJob(task); err != nil {
+		return
+	}
+
+	s.jobs[task.Id] = job
+
+	s.addJobChan <- true
 
 	return
 }
@@ -145,14 +212,54 @@ func (s *Scheduler) loop() {
 		select {
 		case <-time.NewTimer(waitTime).C: // 将在100毫秒可读，返回
 			nearTime = nil
+		case <-s.addJobChan:
+			// 有新任务到来，重新计算调度时间
 		}
 	}
+}
+
+func (s *Scheduler) RunOnce(taskId int64) {
+	var (
+		job    *Job
+		exists bool
+	)
+	if s.running == false {
+		return
+	}
+
+	if job, exists = s.jobs[taskId]; !exists {
+		return
+	}
+
+	s.RunJob(job)
+}
+
+func (s *Scheduler) RunJob(job *Job) {
+	// 控制并发
+	job.runningCount++
+
+	fmt.Println(job.taskName, "当前进行作业数", job.runningCount)
+
+	// 执行任务
+	res := &ExecResult{
+		job:       job,
+		output:    nil,
+		err:       nil,
+		status:    mod.TASK_SUCCESS,
+		planTime:  job.nextTime,
+		realTime:  time.Now(),
+		startTime: time.Time{},
+		endTime:   time.Time{},
+	}
+	GExecutor.ExecuteJob(res)
 }
 
 func (s *Scheduler) HandleEvent() {
 	go func() {
 		var (
-			errMsg string
+			errMsg  string
+			uptCond bson.M
+			uptData bson.M
 		)
 
 		for {
@@ -175,6 +282,15 @@ func (s *Scheduler) HandleEvent() {
 
 				// 保存执行日记
 				GLogger.OrgData(res)
+
+				// 保存上次执行时间
+				uptCond = bson.M{"_id": res.job.taskId}
+				uptData = bson.M{
+					"$set": bson.M{
+						"prev_time": res.endTime.Unix(),
+					},
+				}
+				mod.GTaskMgr.UpdateOne(uptCond, uptData)
 			}
 		}
 	}()

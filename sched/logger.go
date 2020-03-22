@@ -4,7 +4,6 @@ import (
 	"cycron/conf"
 	"cycron/mod"
 	"fmt"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"time"
 )
 
@@ -106,6 +105,8 @@ func (l *Logger) OrgData(res *ExecResult) {
 	var (
 		taskLog *mod.TaskLogMod
 		errMsg  string
+		err     error
+		id      int64
 	)
 
 	psTime := int(res.endTime.Sub(res.realTime) / time.Millisecond)
@@ -115,10 +116,13 @@ func (l *Logger) OrgData(res *ExecResult) {
 		errMsg = ""
 	}
 
-	id, _ := primitive.ObjectIDFromHex(res.job.taskId)
+	id, err = mod.GCommonMgr.GetMaxId(conf.GConfig.Models.TaskLog)
+	if err != nil {
+		fmt.Println(err)
+	}
 	taskLog = &mod.TaskLogMod{
-		Id:          primitive.NewObjectID(),
-		TaskId:      id,
+		Id:          id,
+		TaskId:      res.job.taskId,
 		Command:     res.job.command,
 		Status:      res.status,
 		ProcessTime: psTime,

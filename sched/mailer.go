@@ -123,7 +123,7 @@ func (m *Mailer) OrgData(res *ExecResult) {
 <p>以下是任务执行结果：</p>
 
 <p>
-	任务ID：` + res.job.taskId + `<br/>
+	任务ID：` + strconv.FormatInt(res.job.taskId, 10) + `<br/>
 	任务名称：` + res.job.taskName + `<br/>
 	执行时间：` + res.realTime.Format("2006-01-02 15:04:05") + `<br />
 	执行耗时：` + strconv.FormatFloat(psTime, 'g', 6, 64) + `秒<br />

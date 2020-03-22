@@ -11,6 +11,7 @@ type Config struct {
 	Mongo  MongoConf  `json:"mongo"`
 	Logger LoggerConf `json:"logger"`
 	Models ModelsConf `json:"models"`
+	Server ServerConf `json:"server"`
 }
 
 type MailConf struct {
@@ -36,6 +37,14 @@ type ModelsConf struct {
 	TaskGroup string `json:"taskGroup"`
 	TaskLog   string `json:"taskLog"`
 	User      string `json:"user"`
+	Common    string `json:"common"`
+}
+
+type ServerConf struct {
+	WebRoot      string `json:"webRoot"`
+	Port         int    `json:"port"`
+	ReadTimeout  int    `json:"readTimeout"`
+	WriteTimeout int    `json:"writeTimeout"`
 }
 
 var (
