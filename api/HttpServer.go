@@ -363,6 +363,85 @@ ERR:
 	}
 }
 
+func listLogs(resp http.ResponseWriter, req *http.Request) {
+	var (
+		err      error
+		taskId   int
+		postId   string
+		page     int
+		pageSize int
+		bytes    []byte
+		findCond bson.M
+		taskLogs []*mod.TaskLogMod
+		list     []map[string]interface{}
+	)
+
+	// Stop here if its Preflighted OPTIONS request
+	resp.Header().Set("Access-Control-Allow-Origin", "*")
+	resp.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+	resp.Header().Set("Access-Control-Allow-Headers", "content-type")
+
+	fmt.Println("coming a ", req.Method, " request: ", time.Now())
+	if "OPTIONS" == req.Method {
+		err = ServerError("忽略 OPTIONS 请求")
+		goto ERR
+	}
+
+	// 1, 解析POST表单
+	if err = req.ParseForm(); err != nil {
+		goto ERR
+	}
+
+	postId = req.PostForm.Get("taskId")
+	if "" == postId {
+		err = ServerError("请求参数错误")
+		goto ERR
+	}
+	taskId, _ = strconv.Atoi(postId)
+
+	postId = req.PostForm.Get("page")
+	if "" == postId {
+		page = 1
+	} else {
+		page, _ = strconv.Atoi(postId)
+	}
+
+	postId = req.PostForm.Get("page_size")
+	if "" == postId {
+		pageSize = 20
+	} else {
+		pageSize, _ = strconv.Atoi(postId)
+	}
+
+	// 删除对应的 task
+	findCond = bson.M{"task_id": taskId}
+	taskLogs, err = mod.GTaskLogMgr.FindTaskLogs(findCond, int64(page), int64(pageSize))
+
+	list = make([]map[string]interface{}, len(taskLogs))
+	for k, v := range taskLogs {
+		row := make(map[string]interface{})
+		row["Id"] = v.Id
+		row["TaskId"] = v.TaskId
+		row["Status"] = v.Status
+		row["ProcessTime"] = v.ProcessTime
+		row["EndTime"] = time.Unix(v.EndTime, 0).Format("2006-01-02 15:04:05")
+
+		list[k] = row
+	}
+
+	// 5, 返回正常应答 ({"errno": 0, "msg": "", "data": {....}})
+	if bytes, err = libs.BuildResponse(0, "success", list); err == nil {
+		resp.Write(bytes)
+		return
+	}
+ERR:
+	// 6, 返回异常应答
+	fmt.Println(time.Now(), err)
+	if bytes, err = libs.BuildResponse(1001, err.Error(), nil); err == nil {
+		resp.Write(bytes)
+	}
+}
+
 // 初始化服务
 func InitHttpServer() (err error) {
 	var (
@@ -381,6 +460,7 @@ func InitHttpServer() (err error) {
 	mux.HandleFunc("/task/del", doDelTask)
 	mux.HandleFunc("/task/update_status", doUpdateStatus)
 	mux.HandleFunc("/task/list", listTask)
+	mux.HandleFunc("/log/list", listLogs)
 
 	//  /index.html
 	serverConf = conf.GConfig.Server
