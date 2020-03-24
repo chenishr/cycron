@@ -424,7 +424,7 @@ func listLogs(resp http.ResponseWriter, req *http.Request) {
 		row["TaskId"] = v.TaskId
 		row["Status"] = v.Status
 		row["ProcessTime"] = v.ProcessTime
-		row["EndTime"] = time.Unix(v.EndTime, 0).Format("2006-01-02 15:04:05")
+		row["RealTime"] = time.Unix(v.RealTime, 0).Format("2006-01-02 15:04:05")
 
 		list[k] = row
 	}
