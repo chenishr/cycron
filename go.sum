@@ -55,6 +55,13 @@ github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZN
 github.com/rogpeppe/go-internal v1.1.0/go.mod h1:M8bDsm7K2OlrFYOpmOWEs/qY81heoFRclV5y23lUDJ4=
 github.com/rogpeppe/go-internal v1.2.2/go.mod h1:M8bDsm7K2OlrFYOpmOWEs/qY81heoFRclV5y23lUDJ4=
 github.com/rogpeppe/go-internal v1.3.0/go.mod h1:M8bDsm7K2OlrFYOpmOWEs/qY81heoFRclV5y23lUDJ4=
+github.com/simagix/gox v0.0.0-20200321161420-9c27f427f3ca h1:DfJLWQwvUhZWRc6jA7E+/LG3yD7up36ltU+xgMheq0E=
+github.com/simagix/gox v0.0.0-20200321161420-9c27f427f3ca/go.mod h1:h/LOTr1S9nctgfI4ofHnVj/U8qW9IPslxoTFG0sa2mg=
+github.com/simagix/keyhole v1.5.4 h1:EiQL1UO1Yy1DOpWQ32cfGcYWDI/NSMcrRSyRIg/4GK0=
+github.com/simagix/keyhole v2.0.8+incompatible h1:GiLgeKMMCpm2y5CLrjQ2qKGq7uRX8we7itDplxuUiHM=
+github.com/simagix/keyhole v2.0.8+incompatible/go.mod h1:UrONsZTIFypJujJI46x3zGOqOXntj9fhzERZcSF4thU=
+github.com/simagix/mongo-ftdc v0.9.0 h1:6LIar1wipzlUlPVlJxPPHTs3/0ULNutLF8p2oh9pYEs=
+github.com/simagix/mongo-ftdc v0.9.0/go.mod h1:ylpLovKsBAvSGt2dqk3BVlCj3EfR9WxHvfWp+woo5Us=
 github.com/sirupsen/logrus v1.4.0/go.mod h1:LxeOpSwHxABJmUn/MG1IvRgCAasNZTLOkJPxbbu5VWo=
 github.com/sirupsen/logrus v1.4.1/go.mod h1:ni0Sbl8bgC9z8RoU9G6nDWqqs/fq4eDPysMBDgk/93Q=
 github.com/sirupsen/logrus v1.4.2/go.mod h1:tLMulIdttU9McNUspp0xgXVQah82FyeX6MwdIuYE2rE=
@@ -88,6 +95,7 @@ golang.org/x/sys v0.0.0-20190403152447-81d4e9dc473e/go.mod h1:h1NjWce9XRLGQEsW7w
 golang.org/x/sys v0.0.0-20190412213103-97732733099d/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20190419153524-e8e3143a4f4a/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20190422165155-953cdadca894/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
+golang.org/x/sys v0.0.0-20190531175056-4c3a928424d2 h1:T5DasATyLQfmbTpfEXx/IOL9vfjzW6up+ZDkmHvIf2s=
 golang.org/x/sys v0.0.0-20190531175056-4c3a928424d2/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/text v0.3.0/go.mod h1:NqM8EUOU14njkJ3fqMW+pc6Ldnwhi/IjpwHt7yyuwOQ=
 golang.org/x/text v0.3.2 h1:tW2bmiBqwgJj/UpqtC8EpXEZVYOwU0yG4iWbprSVAcs=

@@ -128,10 +128,10 @@ func (l *Logger) OrgData(res *ExecResult) {
 		ProcessTime: psTime,
 		Output:      string(res.output),
 		Err:         errMsg,
-		PlanTime:    res.planTime.Unix(),
-		RealTime:    res.realTime.Unix(),
-		StartTime:   res.startTime.Unix(),
-		EndTime:     res.endTime.Unix(),
+		PlanTime:    res.planTime.Format("2006-01-02 15:04:05"),
+		RealTime:    res.realTime.Format("2006-01-02 15:04:05"),
+		StartTime:   res.startTime.Format("2006-01-02 15:04:05"),
+		EndTime:     res.endTime.Format("2006-01-02 15:04:05"),
 	}
 
 	l.Append(taskLog)

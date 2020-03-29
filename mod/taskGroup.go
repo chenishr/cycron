@@ -13,8 +13,8 @@ type TaskGroupMod struct {
 	UserId      int64  `bson:"user_id"`
 	GroupName   string `bson:"group_name"`
 	Description string `bson:"description"`
-	CreateTime  int64  `bson:"create_time"`
-	UpdateTime  int64  `bson:"update_time"`
+	CreateTime  string `bson:"create_time"`
+	UpdateTime  string `bson:"update_time"`
 }
 
 type TaskGroupMgr struct {

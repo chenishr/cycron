@@ -5,9 +5,11 @@ import (
 	"cycron/conf"
 	"cycron/dbs"
 	"fmt"
+	"github.com/simagix/keyhole/mdb"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/x/bsonx"
+	"time"
 )
 
 // 任务执行日志
@@ -19,10 +21,20 @@ type TaskLogMod struct {
 	ProcessTime int    `bson:"process_time"`
 	Output      string `bson:"output"`     // 脚本输出
 	Err         string `bson:"err"`        // 错误原因
-	PlanTime    int64  `bson:"plan_time"`  // 理论上的调度时间
-	RealTime    int64  `bson:"real_time"`  // 实际的调度时间
-	StartTime   int64  `bson:"start_time"` // 启动时间
-	EndTime     int64  `bson:"end_time"`   // 结束时间
+	PlanTime    string `bson:"plan_time"`  // 理论上的调度时间
+	RealTime    string `bson:"real_time"`  // 实际的调度时间
+	StartTime   string `bson:"start_time"` // 启动时间
+	EndTime     string `bson:"end_time"`   // 结束时间
+}
+
+type StatGroup struct {
+	Day    string `bson:"day"`
+	Status int    `bson:"status"`
+}
+
+type StatRes struct {
+	Group StatGroup `bson:"_id"`
+	Count float64   `bson:"count"`
 }
 
 type TaskLogMgr struct {
@@ -34,6 +46,70 @@ var (
 
 func init() {
 	GTaskLogMgr = &TaskLogMgr{}
+}
+
+func (tlm *TaskLogMgr) LogStat() (res []StatRes, err error) {
+	var cur *mongo.Cursor
+
+	today := time.Now().AddDate(0, 0, -7).Format("2006-01-02")
+
+	pipeline := `
+		[
+		  {
+			"$match": {
+			  "start_time": { "$gt": "` + today + `" }
+			}
+		  },
+		  {
+			"$project": {
+			  "status": 1,
+			  "day": { "$substr": [ "$start_time", 0, 10 ] }
+			}
+		  },
+		  {
+			"$group": {
+			  "_id": { "day": "$day", "status": "$status" },
+			  "count": { "$sum": 1 }
+			}
+		  },
+			{"$sort":{"_id.day":1}}
+		]
+		`
+	fmt.Println(pipeline)
+
+	opts := options.Aggregate()
+	collection := dbs.GMongo.Client.Database(conf.GConfig.Models.Db).Collection(conf.GConfig.Models.TaskLog)
+	if cur, err = collection.Aggregate(context.TODO(), mdb.MongoPipeline(pipeline), opts); err != nil {
+		return nil, err
+	}
+	defer cur.Close(context.TODO())
+
+	if err = cur.All(context.TODO(), &res); err != nil {
+		return nil, err
+	}
+
+	return
+}
+
+func (tm *TaskLogMgr) FindOneTaskLog(findCond interface{}) (taskLog *TaskLogMod, err error) {
+	var (
+		collection  *mongo.Collection
+		res         *mongo.SingleResult
+		findOptions *options.FindOneOptions
+		findTaskLog TaskLogMod
+	)
+
+	collection = dbs.GMongo.Client.Database(conf.GConfig.Models.Db).Collection(conf.GConfig.Models.TaskLog)
+
+	findOptions = options.FindOne()
+	res = collection.FindOne(context.TODO(), findCond, findOptions)
+
+	if err = res.Decode(&findTaskLog); err != nil {
+		return nil, err
+	}
+
+	taskLog = &findTaskLog
+	return
 }
 
 func (tlm *TaskLogMgr) FindTaskLogs(findCond interface{}, page, pageSize int64) (taskLogs []*TaskLogMod, err error) {

@@ -10,6 +10,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/x/bsonx"
+	"time"
 )
 
 // 任务完成状态
@@ -35,8 +36,8 @@ type TaskMod struct {
 	NotifyEmail  string `bson:"notify_email"`
 	Timeout      int    `bson:"timeout"`
 	ExecuteTimes int    `bson:"execute_times"`
-	PrevTime     int64  `bson:"prev_time"`
-	CreateTime   int64  `bson:"create_time"`
+	PrevTime     string `bson:"prev_time"`
+	CreateTime   string `bson:"create_time"`
 }
 
 type TaskMgr struct {
@@ -61,7 +62,9 @@ func (tm *TaskMgr) UpsertDoc(task *TaskMod) (err error) {
 	)
 	if task.Id == 0 {
 		id, err = GCommonMgr.GetMaxId(conf.GConfig.Models.Task)
+
 		task.Id = id
+		task.CreateTime = time.Now().Format("2006-01-02 15:04:05")
 
 		//  默认启动任务
 		task.Status = 1

@@ -287,7 +287,7 @@ func (s *Scheduler) HandleEvent() {
 				uptCond = bson.M{"_id": res.job.taskId}
 				uptData = bson.M{
 					"$set": bson.M{
-						"prev_time": res.endTime.Unix(),
+						"prev_time": res.endTime.Format("2006-01-02 15:04:05"),
 					},
 				}
 				mod.GTaskMgr.UpdateOne(uptCond, uptData)

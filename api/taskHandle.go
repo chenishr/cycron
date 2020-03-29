@@ -1,7 +1,6 @@
 package api
 
 import (
-	"cycron/conf"
 	"cycron/libs"
 	"cycron/mod"
 	"cycron/sched"
@@ -10,27 +9,10 @@ import (
 	"github.com/gorhill/cronexpr"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"net"
 	"net/http"
 	"strconv"
 	"time"
 )
-
-// 任务的HTTP接口
-type HttpServer struct {
-	Server *http.Server
-}
-
-var (
-	// 单例对象
-	GServer *HttpServer
-)
-
-type ServerError string
-
-func (e ServerError) Error() string {
-	return "httpserver error: " + strconv.Quote(string(e))
-}
 
 func doDelTask(resp http.ResponseWriter, req *http.Request) {
 	var (
@@ -277,6 +259,11 @@ func doSaveTask(resp http.ResponseWriter, req *http.Request) {
 		goto ERR
 	}
 
+	if "" == task.Command {
+		err = ServerError("命令错误")
+		goto ERR
+	}
+
 	if err = mod.GTaskMgr.UpsertDoc(&task); err != nil {
 		goto ERR
 	}
@@ -326,16 +313,17 @@ func listTask(resp http.ResponseWriter, req *http.Request) {
 		row["Id"] = v.Id
 		row["TaskName"] = v.TaskName
 		row["CronSpec"] = v.CronSpec
+		row["Command"] = v.Command
 		row["Status"] = v.Status
 		row["Description"] = v.Description
 		row["Notify"] = v.Notify
 		row["NotifyEmail"] = v.NotifyEmail
 		row["Timeout"] = v.Timeout
 
-		if v.PrevTime > 0 {
-			row["PrevTime"] = time.Unix(v.PrevTime, 0).Format("2006-01-02 15:04:05")
-		} else {
+		if v.PrevTime == "" {
 			row["PrevTime"] = "-"
+		} else {
+			row["PrevTime"] = v.PrevTime
 		}
 
 		if v.Status == 1 {
@@ -361,134 +349,4 @@ ERR:
 	if bytes, err = libs.BuildResponse(1001, err.Error(), nil); err == nil {
 		resp.Write(bytes)
 	}
-}
-
-func listLogs(resp http.ResponseWriter, req *http.Request) {
-	var (
-		err      error
-		taskId   int
-		postId   string
-		page     int
-		pageSize int
-		bytes    []byte
-		findCond bson.M
-		taskLogs []*mod.TaskLogMod
-		list     []map[string]interface{}
-	)
-
-	// Stop here if its Preflighted OPTIONS request
-	resp.Header().Set("Access-Control-Allow-Origin", "*")
-	resp.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
-	resp.Header().Set("Access-Control-Allow-Headers", "content-type")
-
-	fmt.Println("coming a ", req.Method, " request: ", time.Now())
-	if "OPTIONS" == req.Method {
-		err = ServerError("忽略 OPTIONS 请求")
-		goto ERR
-	}
-
-	// 1, 解析POST表单
-	if err = req.ParseForm(); err != nil {
-		goto ERR
-	}
-
-	postId = req.PostForm.Get("taskId")
-	if "" == postId {
-		err = ServerError("请求参数错误")
-		goto ERR
-	}
-	taskId, _ = strconv.Atoi(postId)
-
-	postId = req.PostForm.Get("page")
-	if "" == postId {
-		page = 1
-	} else {
-		page, _ = strconv.Atoi(postId)
-	}
-
-	postId = req.PostForm.Get("page_size")
-	if "" == postId {
-		pageSize = 20
-	} else {
-		pageSize, _ = strconv.Atoi(postId)
-	}
-
-	// 删除对应的 task
-	findCond = bson.M{"task_id": taskId}
-	taskLogs, err = mod.GTaskLogMgr.FindTaskLogs(findCond, int64(page), int64(pageSize))
-
-	list = make([]map[string]interface{}, len(taskLogs))
-	for k, v := range taskLogs {
-		row := make(map[string]interface{})
-		row["Id"] = v.Id
-		row["TaskId"] = v.TaskId
-		row["Status"] = v.Status
-		row["ProcessTime"] = v.ProcessTime
-		row["RealTime"] = time.Unix(v.RealTime, 0).Format("2006-01-02 15:04:05")
-
-		list[k] = row
-	}
-
-	// 5, 返回正常应答 ({"errno": 0, "msg": "", "data": {....}})
-	if bytes, err = libs.BuildResponse(0, "success", list); err == nil {
-		resp.Write(bytes)
-		return
-	}
-ERR:
-	// 6, 返回异常应答
-	fmt.Println(time.Now(), err)
-	if bytes, err = libs.BuildResponse(1001, err.Error(), nil); err == nil {
-		resp.Write(bytes)
-	}
-}
-
-// 初始化服务
-func InitHttpServer() (err error) {
-	var (
-		mux           *http.ServeMux
-		listener      net.Listener
-		Server        *http.Server
-		staticDir     http.Dir     // 静态文件根目录
-		staticHandler http.Handler // 静态文件的HTTP回调
-		serverConf    conf.ServerConf
-	)
-
-	// 配置路由
-	mux = http.NewServeMux()
-	mux.HandleFunc("/task/save", doSaveTask)
-	mux.HandleFunc("/task/run", doRunTask)
-	mux.HandleFunc("/task/del", doDelTask)
-	mux.HandleFunc("/task/update_status", doUpdateStatus)
-	mux.HandleFunc("/task/list", listTask)
-	mux.HandleFunc("/log/list", listLogs)
-
-	//  /index.html
-	serverConf = conf.GConfig.Server
-
-	// 静态文件目录
-	staticDir = http.Dir(serverConf.WebRoot)
-	staticHandler = http.FileServer(staticDir)
-	mux.Handle("/", http.StripPrefix("/", staticHandler)) //   ./webroot/index.html
-
-	// 启动TCP监听
-	if listener, err = net.Listen("tcp", ":"+strconv.Itoa(serverConf.Port)); err != nil {
-		return
-	}
-
-	// 创建一个HTTP服务
-	Server = &http.Server{
-		ReadTimeout:  time.Duration(serverConf.ReadTimeout) * time.Millisecond,
-		WriteTimeout: time.Duration(serverConf.WriteTimeout) * time.Millisecond,
-		Handler:      mux,
-	}
-
-	// 赋值单例
-	GServer = &HttpServer{
-		Server: Server,
-	}
-
-	// 启动了服务端
-	go Server.Serve(listener)
-
-	return
 }
