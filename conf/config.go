@@ -45,6 +45,7 @@ type ServerConf struct {
 	Port         int    `json:"port"`
 	ReadTimeout  int    `json:"readTimeout"`
 	WriteTimeout int    `json:"writeTimeout"`
+	JwtSecret    string `json:"jwtSecret"`
 }
 
 var (

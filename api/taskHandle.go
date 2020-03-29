@@ -315,6 +315,8 @@ func listTask(resp http.ResponseWriter, req *http.Request) {
 		row["CronSpec"] = v.CronSpec
 		row["Command"] = v.Command
 		row["Status"] = v.Status
+		row["GroupId"] = v.GroupId
+		row["Concurrent"] = v.Concurrent
 		row["Description"] = v.Description
 		row["Notify"] = v.Notify
 		row["NotifyEmail"] = v.NotifyEmail
@@ -328,7 +330,7 @@ func listTask(resp http.ResponseWriter, req *http.Request) {
 
 		if v.Status == 1 {
 			if expr, err = cronexpr.Parse(v.CronSpec); err != nil {
-				row["NextTime"] = ""
+				row["NextTime"] = "-"
 			} else {
 				row["NextTime"] = expr.Next(time.Now()).Format("2006-01-02 15:04:05")
 			}

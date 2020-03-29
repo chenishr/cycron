@@ -43,6 +43,15 @@ func InitHttpServer() (err error) {
 	mux.HandleFunc("/log/detail", logDetail)
 	mux.HandleFunc("/log/stat", logStat)
 
+	// 任务组管理
+	mux.HandleFunc("/group/save", doSaveTaskGroup)
+	mux.HandleFunc("/group/list", listTaskGroup)
+
+	// 用户管理
+	mux.HandleFunc("/user/login", doLogin)
+	mux.HandleFunc("/user/save", doSaveUser)
+	mux.HandleFunc("/user/info", userInfo)
+
 	//  /index.html
 	serverConf = conf.GConfig.Server
 

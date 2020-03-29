@@ -37,6 +37,7 @@ type TaskMod struct {
 	Timeout      int    `bson:"timeout"`
 	ExecuteTimes int    `bson:"execute_times"`
 	PrevTime     string `bson:"prev_time"`
+	UpdateTime   string `bson:"update_time"`
 	CreateTime   string `bson:"create_time"`
 }
 
@@ -65,6 +66,7 @@ func (tm *TaskMgr) UpsertDoc(task *TaskMod) (err error) {
 
 		task.Id = id
 		task.CreateTime = time.Now().Format("2006-01-02 15:04:05")
+		task.UpdateTime = time.Now().Format("2006-01-02 15:04:05")
 
 		//  默认启动任务
 		task.Status = 1
@@ -84,6 +86,7 @@ func (tm *TaskMgr) UpsertDoc(task *TaskMod) (err error) {
 			"timeout":      task.Timeout,
 			"notify":       task.Notify,
 			"notify_email": task.NotifyEmail,
+			"update_time":  time.Now().Format("2006-01-02 15:04:05"),
 		},
 	}
 	return tm.UpdateOne(uptCond, uptData)

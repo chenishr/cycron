@@ -3,6 +3,7 @@ module cycron
 go 1.14
 
 require (
+	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/gorhill/cronexpr v0.0.0-20180427100037-88b0669f7d75
 	github.com/simagix/gox v0.0.0-20200321161420-9c27f427f3ca // indirect
 	github.com/simagix/keyhole v2.0.8+incompatible
