@@ -1,6 +1,7 @@
-package api
+package handle
 
 import (
+	error2 "cycron/api/error"
 	"cycron/libs"
 	"cycron/mod"
 	"cycron/sched"
@@ -14,7 +15,7 @@ import (
 	"time"
 )
 
-func doDelTask(resp http.ResponseWriter, req *http.Request) {
+func DoDelTask(resp http.ResponseWriter, req *http.Request) {
 	var (
 		err     error
 		taskId  int
@@ -22,17 +23,6 @@ func doDelTask(resp http.ResponseWriter, req *http.Request) {
 		bytes   []byte
 		delCond bson.M
 	)
-
-	// Stop here if its Preflighted OPTIONS request
-	resp.Header().Set("Access-Control-Allow-Origin", "*")
-	resp.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
-	resp.Header().Set("Access-Control-Allow-Headers", "content-type")
-
-	fmt.Println("coming a ", req.Method, " request: ", time.Now())
-	if "OPTIONS" == req.Method {
-		err = ServerError("忽略 OPTIONS 请求")
-		goto ERR
-	}
 
 	// 1, 解析POST表单
 	if err = req.ParseForm(); err != nil {
@@ -43,7 +33,7 @@ func doDelTask(resp http.ResponseWriter, req *http.Request) {
 	//postTask, _ = ioutil.ReadAll(req.Body)
 	postId = req.PostForm.Get("taskId")
 	if "" == postId {
-		err = ServerError("请求参数错误")
+		err = error2.ServerError("请求参数错误")
 		goto ERR
 	}
 
@@ -68,7 +58,7 @@ ERR:
 	}
 }
 
-func doUpdateStatus(resp http.ResponseWriter, req *http.Request) {
+func DoUpdateStatus(resp http.ResponseWriter, req *http.Request) {
 	var (
 		err        error
 		taskId     int
@@ -82,17 +72,6 @@ func doUpdateStatus(resp http.ResponseWriter, req *http.Request) {
 		uptData    bson.M
 	)
 
-	// Stop here if its Preflighted OPTIONS request
-	resp.Header().Set("Access-Control-Allow-Origin", "*")
-	resp.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
-	resp.Header().Set("Access-Control-Allow-Headers", "content-type")
-
-	fmt.Println("coming a ", req.Method, " request: ", time.Now())
-	if "OPTIONS" == req.Method {
-		err = ServerError("忽略 OPTIONS 请求")
-		goto ERR
-	}
-
 	// 1, 解析POST表单
 	if err = req.ParseForm(); err != nil {
 		goto ERR
@@ -103,7 +82,7 @@ func doUpdateStatus(resp http.ResponseWriter, req *http.Request) {
 	postId = req.PostForm.Get("taskId")
 	postStatus = req.PostForm.Get("taskStatus")
 	if "" == postId || "" == postStatus {
-		err = ServerError("请求参数错误")
+		err = error2.ServerError("请求参数错误")
 		goto ERR
 	}
 
@@ -117,7 +96,7 @@ func doUpdateStatus(resp http.ResponseWriter, req *http.Request) {
 	}
 
 	if task.Status == taskStatus {
-		err = ServerError("任务状态更新失败")
+		err = error2.ServerError("任务状态更新失败")
 		goto ERR
 	}
 
@@ -153,7 +132,7 @@ ERR:
 	}
 }
 
-func doRunTask(resp http.ResponseWriter, req *http.Request) {
+func DoRunTask(resp http.ResponseWriter, req *http.Request) {
 	var (
 		err      error
 		taskId   int
@@ -162,17 +141,6 @@ func doRunTask(resp http.ResponseWriter, req *http.Request) {
 		task     *mod.TaskMod
 		findCond bson.M
 	)
-
-	// Stop here if its Preflighted OPTIONS request
-	resp.Header().Set("Access-Control-Allow-Origin", "*")
-	resp.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
-	resp.Header().Set("Access-Control-Allow-Headers", "content-type")
-
-	fmt.Println("coming a ", req.Method, " request: ", time.Now())
-	if "OPTIONS" == req.Method {
-		err = ServerError("忽略 OPTIONS 请求")
-		goto ERR
-	}
 
 	// 1, 解析POST表单
 	if err = req.ParseForm(); err != nil {
@@ -183,7 +151,7 @@ func doRunTask(resp http.ResponseWriter, req *http.Request) {
 	//postTask, _ = ioutil.ReadAll(req.Body)
 	postId = req.PostForm.Get("taskId")
 	if "" == postId {
-		err = ServerError("任务 ID 不能为空")
+		err = error2.ServerError("任务 ID 不能为空")
 		goto ERR
 	}
 
@@ -213,24 +181,13 @@ ERR:
 	}
 }
 
-func doSaveTask(resp http.ResponseWriter, req *http.Request) {
+func DoSaveTask(resp http.ResponseWriter, req *http.Request) {
 	var (
 		err      error
 		postTask string
 		bytes    []byte
 		task     mod.TaskMod
 	)
-
-	// Stop here if its Preflighted OPTIONS request
-	resp.Header().Set("Access-Control-Allow-Origin", "*")
-	resp.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
-	resp.Header().Set("Access-Control-Allow-Headers", "content-type")
-
-	fmt.Println("coming a ", req.Method, " request: ", time.Now())
-	if "OPTIONS" == req.Method {
-		err = ServerError("忽略 OPTIONS 请求")
-		goto ERR
-	}
 
 	// 1, 解析POST表单
 	if err = req.ParseForm(); err != nil {
@@ -255,12 +212,12 @@ func doSaveTask(resp http.ResponseWriter, req *http.Request) {
 	}
 
 	if _, err = cronexpr.Parse(task.CronSpec); err != nil {
-		err = ServerError("cron 表达式错误：" + err.Error())
+		err = error2.ServerError("cron 表达式错误：" + err.Error())
 		goto ERR
 	}
 
 	if "" == task.Command {
-		err = ServerError("命令错误")
+		err = error2.ServerError("命令错误")
 		goto ERR
 	}
 
@@ -288,7 +245,7 @@ ERR:
 }
 
 // 列举所有crontab任务
-func listTask(resp http.ResponseWriter, req *http.Request) {
+func ListTask(resp http.ResponseWriter, req *http.Request) {
 	var (
 		tasks []*mod.TaskMod
 		bytes []byte
@@ -296,10 +253,6 @@ func listTask(resp http.ResponseWriter, req *http.Request) {
 		list  []map[string]interface{}
 		expr  *cronexpr.Expression
 	)
-
-	// Stop here if its Preflighted OPTIONS request
-	resp.Header().Set("Access-Control-Allow-Origin", "*")
-	resp.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
 
 	// 获取任务列表
 	findCond := primitive.M{}

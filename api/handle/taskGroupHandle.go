@@ -1,6 +1,7 @@
-package api
+package handle
 
 import (
+	error2 "cycron/api/error"
 	"cycron/libs"
 	"cycron/mod"
 	"encoding/json"
@@ -10,24 +11,13 @@ import (
 	"time"
 )
 
-func doSaveTaskGroup(resp http.ResponseWriter, req *http.Request) {
+func DoSaveTaskGroup(resp http.ResponseWriter, req *http.Request) {
 	var (
 		err       error
 		postTask  string
 		bytes     []byte
 		taskGroup mod.TaskGroupMod
 	)
-
-	// Stop here if its Preflighted OPTIONS request
-	resp.Header().Set("Access-Control-Allow-Origin", "*")
-	resp.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
-	resp.Header().Set("Access-Control-Allow-Headers", "content-type")
-
-	fmt.Println("coming a ", req.Method, " request: ", time.Now())
-	if "OPTIONS" == req.Method {
-		err = ServerError("忽略 OPTIONS 请求")
-		goto ERR
-	}
 
 	// 1, 解析POST表单
 	if err = req.ParseForm(); err != nil {
@@ -46,7 +36,7 @@ func doSaveTaskGroup(resp http.ResponseWriter, req *http.Request) {
 	// 4, 保存到mongoDB
 
 	if "" == taskGroup.GroupName {
-		err = ServerError("参数错误")
+		err = error2.ServerError("参数错误")
 		goto ERR
 	}
 
@@ -68,17 +58,13 @@ ERR:
 }
 
 // 列举所有crontab任务
-func listTaskGroup(resp http.ResponseWriter, req *http.Request) {
+func ListTaskGroup(resp http.ResponseWriter, req *http.Request) {
 	var (
 		taskGroups []*mod.TaskGroupMod
 		bytes      []byte
 		err        error
 		list       []map[string]interface{}
 	)
-
-	// Stop here if its Preflighted OPTIONS request
-	resp.Header().Set("Access-Control-Allow-Origin", "*")
-	resp.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
 
 	// 获取任务列表
 	findCond := primitive.M{}

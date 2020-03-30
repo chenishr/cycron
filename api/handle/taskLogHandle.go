@@ -1,6 +1,7 @@
-package api
+package handle
 
 import (
+	error2 "cycron/api/error"
 	"cycron/libs"
 	"cycron/mod"
 	"fmt"
@@ -11,7 +12,7 @@ import (
 	"time"
 )
 
-func logStat(resp http.ResponseWriter, req *http.Request) {
+func LogStat(resp http.ResponseWriter, req *http.Request) {
 	var (
 		err     error
 		bytes   []byte
@@ -19,17 +20,6 @@ func logStat(resp http.ResponseWriter, req *http.Request) {
 		logStat []mod.StatRes
 		list    []map[string]interface{}
 	)
-
-	// Stop here if its Preflighted OPTIONS request
-	resp.Header().Set("Access-Control-Allow-Origin", "*")
-	resp.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
-	resp.Header().Set("Access-Control-Allow-Headers", "content-type")
-
-	fmt.Println("coming a ", req.Method, " request: ", time.Now())
-	if "OPTIONS" == req.Method {
-		err = ServerError("忽略 OPTIONS 请求")
-		goto ERR
-	}
 
 	// 删除对应的 task
 	if logStat, err = mod.GTaskLogMgr.LogStat(); err != nil {
@@ -59,7 +49,7 @@ ERR:
 	}
 }
 
-func logDetail(resp http.ResponseWriter, req *http.Request) {
+func LogDetail(resp http.ResponseWriter, req *http.Request) {
 	var (
 		err      error
 		logId    int
@@ -70,17 +60,6 @@ func logDetail(resp http.ResponseWriter, req *http.Request) {
 		logData  map[string]interface{}
 	)
 
-	// Stop here if its Preflighted OPTIONS request
-	resp.Header().Set("Access-Control-Allow-Origin", "*")
-	resp.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
-	resp.Header().Set("Access-Control-Allow-Headers", "content-type")
-
-	fmt.Println("coming a ", req.Method, " request: ", time.Now())
-	if "OPTIONS" == req.Method {
-		err = ServerError("忽略 OPTIONS 请求")
-		goto ERR
-	}
-
 	// 1, 解析POST表单
 	if err = req.ParseForm(); err != nil {
 		goto ERR
@@ -88,7 +67,7 @@ func logDetail(resp http.ResponseWriter, req *http.Request) {
 
 	postId = req.PostForm.Get("logId")
 	if "" == postId {
-		err = ServerError("请求参数错误")
+		err = error2.ServerError("请求参数错误")
 		goto ERR
 	}
 	logId, _ = strconv.Atoi(postId)
@@ -124,7 +103,7 @@ ERR:
 		resp.Write(bytes)
 	}
 }
-func listLogs(resp http.ResponseWriter, req *http.Request) {
+func ListLogs(resp http.ResponseWriter, req *http.Request) {
 	var (
 		err      error
 		taskId   int
@@ -137,17 +116,6 @@ func listLogs(resp http.ResponseWriter, req *http.Request) {
 		list     []map[string]interface{}
 	)
 
-	// Stop here if its Preflighted OPTIONS request
-	resp.Header().Set("Access-Control-Allow-Origin", "*")
-	resp.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
-	resp.Header().Set("Access-Control-Allow-Headers", "content-type")
-
-	fmt.Println("coming a ", req.Method, " request: ", time.Now())
-	if "OPTIONS" == req.Method {
-		err = ServerError("忽略 OPTIONS 请求")
-		goto ERR
-	}
-
 	// 1, 解析POST表单
 	if err = req.ParseForm(); err != nil {
 		goto ERR
@@ -155,7 +123,7 @@ func listLogs(resp http.ResponseWriter, req *http.Request) {
 
 	postId = req.PostForm.Get("taskId")
 	if "" == postId {
-		err = ServerError("请求参数错误")
+		err = error2.ServerError("请求参数错误")
 		goto ERR
 	}
 	taskId, _ = strconv.Atoi(postId)

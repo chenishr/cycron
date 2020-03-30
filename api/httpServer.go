@@ -1,6 +1,8 @@
 package api
 
 import (
+	"cycron/api/handle"
+	mw "cycron/api/middleware"
 	"cycron/conf"
 	"net"
 	"net/http"
@@ -32,25 +34,25 @@ func InitHttpServer() (err error) {
 	// 配置路由
 	mux = http.NewServeMux()
 	// 任务管理
-	mux.HandleFunc("/task/save", doSaveTask)
-	mux.HandleFunc("/task/run", doRunTask)
-	mux.HandleFunc("/task/del", doDelTask)
-	mux.HandleFunc("/task/update_status", doUpdateStatus)
-	mux.HandleFunc("/task/list", listTask)
+	mux.HandleFunc("/task/save", mw.Chain(handle.DoSaveTask, mw.ReturnOption(), mw.SetHeader()))
+	mux.HandleFunc("/task/run", mw.Chain(handle.DoRunTask, mw.ReturnOption(), mw.SetHeader()))
+	mux.HandleFunc("/task/del", mw.Chain(handle.DoDelTask, mw.ReturnOption(), mw.SetHeader()))
+	mux.HandleFunc("/task/update_status", mw.Chain(handle.DoUpdateStatus, mw.ReturnOption(), mw.SetHeader()))
+	mux.HandleFunc("/task/list", mw.Chain(handle.ListTask, mw.ReturnOption(), mw.SetHeader()))
 
 	// 日记管理
-	mux.HandleFunc("/log/list", listLogs)
-	mux.HandleFunc("/log/detail", logDetail)
-	mux.HandleFunc("/log/stat", logStat)
+	mux.HandleFunc("/log/list", mw.Chain(handle.ListLogs, mw.ReturnOption(), mw.SetHeader()))
+	mux.HandleFunc("/log/detail", mw.Chain(handle.LogDetail, mw.ReturnOption(), mw.SetHeader()))
+	mux.HandleFunc("/log/stat", mw.Chain(handle.LogStat, mw.ReturnOption(), mw.SetHeader()))
 
 	// 任务组管理
-	mux.HandleFunc("/group/save", doSaveTaskGroup)
-	mux.HandleFunc("/group/list", listTaskGroup)
+	mux.HandleFunc("/group/save", mw.Chain(handle.DoSaveTaskGroup, mw.ReturnOption(), mw.SetHeader()))
+	mux.HandleFunc("/group/list", mw.Chain(handle.ListTaskGroup, mw.ReturnOption(), mw.SetHeader()))
 
 	// 用户管理
-	mux.HandleFunc("/user/login", doLogin)
-	mux.HandleFunc("/user/save", doSaveUser)
-	mux.HandleFunc("/user/info", userInfo)
+	mux.HandleFunc("/user/login", mw.Chain(handle.DoLogin, mw.ReturnOption(), mw.SetHeader()))
+	mux.HandleFunc("/user/save", mw.Chain(handle.DoSaveUser, mw.ReturnOption(), mw.SetHeader()))
+	mux.HandleFunc("/user/info", mw.Chain(handle.UserInfo, mw.CheckToken(), mw.ReturnOption(), mw.SetHeader()))
 
 	//  /index.html
 	serverConf = conf.GConfig.Server

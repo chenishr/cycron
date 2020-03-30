@@ -1,6 +1,8 @@
-package api
+package handle
 
 import (
+	error2 "cycron/api/error"
+	"cycron/api/middleware"
 	"cycron/conf"
 	"cycron/libs"
 	"cycron/mod"
@@ -11,7 +13,7 @@ import (
 	"time"
 )
 
-func doSaveUser(resp http.ResponseWriter, req *http.Request) {
+func DoSaveUser(resp http.ResponseWriter, req *http.Request) {
 	var (
 		err       error
 		postStr   string
@@ -19,17 +21,6 @@ func doSaveUser(resp http.ResponseWriter, req *http.Request) {
 		bytes     []byte
 		user      mod.UserMod
 	)
-
-	// Stop here if its Preflighted OPTIONS request
-	resp.Header().Set("Access-Control-Allow-Origin", "*")
-	resp.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
-	resp.Header().Set("Access-Control-Allow-Headers", "content-type")
-
-	fmt.Println("coming a ", req.Method, " request: ", time.Now())
-	if "OPTIONS" == req.Method {
-		err = ServerError("忽略 OPTIONS 请求")
-		goto ERR
-	}
 
 	// 1, 解析POST表单
 	if err = req.ParseForm(); err != nil {
@@ -48,7 +39,7 @@ func doSaveUser(resp http.ResponseWriter, req *http.Request) {
 	// 4, 保存到mongoDB
 
 	if "" == user.UserName || "" == user.Email {
-		err = ServerError("参数错误")
+		err = error2.ServerError("参数错误")
 		goto ERR
 	}
 
@@ -73,7 +64,7 @@ ERR:
 	}
 }
 
-func doLogin(resp http.ResponseWriter, req *http.Request) {
+func DoLogin(resp http.ResponseWriter, req *http.Request) {
 	var (
 		err      error
 		email    string
@@ -85,17 +76,6 @@ func doLogin(resp http.ResponseWriter, req *http.Request) {
 		resData  map[string]interface{}
 		resUser  map[string]interface{}
 	)
-
-	// Stop here if its Preflighted OPTIONS request
-	resp.Header().Set("Access-Control-Allow-Origin", "*")
-	resp.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
-	resp.Header().Set("Access-Control-Allow-Headers", "content-type")
-
-	fmt.Println("coming a ", req.Method, " request: ", time.Now())
-	if "OPTIONS" == req.Method {
-		err = ServerError("忽略 OPTIONS 请求")
-		goto ERR
-	}
 
 	// 1, 解析POST表单
 	if err = req.ParseForm(); err != nil {
@@ -109,7 +89,7 @@ func doLogin(resp http.ResponseWriter, req *http.Request) {
 	// 4, 保存到mongoDB
 
 	if "" == email || "" == passwd {
-		err = ServerError("参数错误")
+		err = error2.ServerError("参数错误")
 		goto ERR
 	}
 
@@ -153,47 +133,15 @@ ERR:
 	}
 }
 
-func userInfo(resp http.ResponseWriter, req *http.Request) {
+func UserInfo(resp http.ResponseWriter, req *http.Request) {
 	var (
-		err      error
-		bytes    []byte
-		user     *mod.UserMod
-		findCond bson.M
-		resUser  map[string]interface{}
-		token    []string
-		ok       bool
-		claims   *libs.JwtCustomClaims
+		err     error
+		bytes   []byte
+		user    *mod.UserMod
+		resUser map[string]interface{}
 	)
 
-	// Stop here if its Preflighted OPTIONS request
-	resp.Header().Set("Access-Control-Allow-Origin", "*")
-	resp.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
-	resp.Header().Set("Access-Control-Allow-Headers", "content-type, token")
-
-	fmt.Println("coming a ", req.Method, " request: ", time.Now())
-	if "OPTIONS" == req.Method {
-		err = ServerError("忽略 OPTIONS 请求")
-		goto ERR
-	}
-
-	if token, ok = req.Header["Token"]; !ok {
-		err = ServerError("无 token 参数")
-		goto ERR_TOKEN
-	}
-
-	if claims, err = libs.ParseToken(token[0], []byte(conf.GConfig.Server.JwtSecret)); err != nil {
-		goto ERR_TOKEN
-	}
-
-	findCond = bson.M{
-		"email": claims.Email,
-		"_id":   claims.Id,
-	}
-	if user, err = mod.GUserMgr.FindOneUser(findCond); err != nil {
-		goto ERR
-	}
-
-	fmt.Println(user)
+	user = middleware.User
 
 	resUser = make(map[string]interface{})
 	resUser["Id"] = user.Id
@@ -207,16 +155,10 @@ func userInfo(resp http.ResponseWriter, req *http.Request) {
 		resp.Write(bytes)
 		return
 	}
-ERR:
+
 	// 6, 返回异常应答
 	fmt.Println(time.Now(), err)
 	if bytes, err = libs.BuildResponse(1001, err.Error(), nil); err == nil {
-		resp.Write(bytes)
-	}
-	return
-ERR_TOKEN:
-	fmt.Println(time.Now(), err)
-	if bytes, err = libs.BuildResponse(1000, err.Error(), nil); err == nil {
 		resp.Write(bytes)
 	}
 	return
