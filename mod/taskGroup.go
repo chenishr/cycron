@@ -67,9 +67,15 @@ func (g *TaskGroupMgr) UpdateOne(uptCond interface{}, update interface{}) (err e
 	var (
 		res        *mongo.UpdateResult
 		collection *mongo.Collection
+		client     *mongo.Client
+		p          interface{}
 	)
 
-	collection = dbs.GMongo.Client.Database(conf.GConfig.Models.Db).Collection(conf.GConfig.Models.TaskGroup)
+	p, err = dbs.GMongoPool.Get()
+	defer dbs.GMongoPool.Put(p)
+
+	client = p.(*mongo.Client)
+	collection = client.Database(conf.GConfig.Models.Db).Collection(conf.GConfig.Models.TaskGroup)
 
 	// 执行删除
 	if res, err = collection.UpdateOne(context.TODO(), uptCond, update); err != nil {
@@ -86,9 +92,15 @@ func (g *TaskGroupMgr) AddGroup(taskGroup *TaskGroupMod) (err error) {
 	var (
 		collection *mongo.Collection
 		result     *mongo.InsertOneResult
+		client     *mongo.Client
+		p          interface{}
 	)
 
-	collection = dbs.GMongo.Client.Database(conf.GConfig.Models.Db).Collection(conf.GConfig.Models.TaskGroup)
+	p, err = dbs.GMongoPool.Get()
+	defer dbs.GMongoPool.Put(p)
+
+	client = p.(*mongo.Client)
+	collection = client.Database(conf.GConfig.Models.Db).Collection(conf.GConfig.Models.TaskGroup)
 
 	if result, err = collection.InsertOne(context.TODO(), taskGroup); err != nil {
 		fmt.Println(err)
@@ -104,9 +116,15 @@ func (g *TaskGroupMgr) FindTaskGroups(findCond interface{}) (taskGroups []*TaskG
 		collection  *mongo.Collection
 		cursor      *mongo.Cursor
 		findOptions *options.FindOptions
+		client      *mongo.Client
+		p           interface{}
 	)
 
-	collection = dbs.GMongo.Client.Database(conf.GConfig.Models.Db).Collection(conf.GConfig.Models.TaskGroup)
+	p, err = dbs.GMongoPool.Get()
+	defer dbs.GMongoPool.Put(p)
+
+	client = p.(*mongo.Client)
+	collection = client.Database(conf.GConfig.Models.Db).Collection(conf.GConfig.Models.TaskGroup)
 
 	findOptions = options.Find()
 	findOptions.SetSort(bsonx.Doc{{"_id", bsonx.Int32(-1)}})

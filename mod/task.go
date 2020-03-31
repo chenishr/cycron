@@ -96,11 +96,17 @@ func (tm *TaskMgr) UpdateOne(uptCond interface{}, update interface{}) (err error
 	var (
 		res        *mongo.UpdateResult
 		collection *mongo.Collection
+		client     *mongo.Client
+		p          interface{}
 	)
 
 	fmt.Println("执行更新")
 
-	collection = dbs.GMongo.Client.Database(conf.GConfig.Models.Db).Collection(conf.GConfig.Models.Task)
+	p, err = dbs.GMongoPool.Get()
+	defer dbs.GMongoPool.Put(p)
+
+	client = p.(*mongo.Client)
+	collection = client.Database(conf.GConfig.Models.Db).Collection(conf.GConfig.Models.Task)
 
 	// 执行删除
 	if res, err = collection.UpdateOne(context.TODO(), uptCond, update); err != nil {
@@ -120,9 +126,15 @@ func (tm *TaskMgr) DelTasks(delCond interface{}) (err error) {
 	var (
 		delResult  *mongo.DeleteResult
 		collection *mongo.Collection
+		client     *mongo.Client
+		p          interface{}
 	)
 
-	collection = dbs.GMongo.Client.Database(conf.GConfig.Models.Db).Collection(conf.GConfig.Models.Task)
+	p, err = dbs.GMongoPool.Get()
+	defer dbs.GMongoPool.Put(p)
+
+	client = p.(*mongo.Client)
+	collection = client.Database(conf.GConfig.Models.Db).Collection(conf.GConfig.Models.Task)
 
 	// 执行删除
 	if delResult, err = collection.DeleteMany(context.TODO(), delCond); err != nil {
@@ -142,11 +154,17 @@ func (tm *TaskMgr) AddTask(task *TaskMod) (err error) {
 	var (
 		collection *mongo.Collection
 		result     *mongo.InsertOneResult
+		client     *mongo.Client
+		p          interface{}
 	)
 
 	fmt.Println("执行添加")
 
-	collection = dbs.GMongo.Client.Database(conf.GConfig.Models.Db).Collection(conf.GConfig.Models.Task)
+	p, err = dbs.GMongoPool.Get()
+	defer dbs.GMongoPool.Put(p)
+
+	client = p.(*mongo.Client)
+	collection = client.Database(conf.GConfig.Models.Db).Collection(conf.GConfig.Models.Task)
 
 	if result, err = collection.InsertOne(context.TODO(), task); err != nil {
 		fmt.Println(err)
@@ -163,9 +181,15 @@ func (tm *TaskMgr) FindOneTask(findCond interface{}) (task *TaskMod, err error) 
 		res         *mongo.SingleResult
 		findOptions *options.FindOneOptions
 		findTask    TaskMod
+		client      *mongo.Client
+		p           interface{}
 	)
 
-	collection = dbs.GMongo.Client.Database(conf.GConfig.Models.Db).Collection(conf.GConfig.Models.Task)
+	p, err = dbs.GMongoPool.Get()
+	defer dbs.GMongoPool.Put(p)
+
+	client = p.(*mongo.Client)
+	collection = client.Database(conf.GConfig.Models.Db).Collection(conf.GConfig.Models.Task)
 
 	findOptions = options.FindOne()
 	res = collection.FindOne(context.TODO(), findCond, findOptions)
@@ -183,9 +207,15 @@ func (tm *TaskMgr) FindTasks(findCond interface{}) (tasks []*TaskMod, err error)
 		collection  *mongo.Collection
 		cursor      *mongo.Cursor
 		findOptions *options.FindOptions
+		client      *mongo.Client
+		p           interface{}
 	)
 
-	collection = dbs.GMongo.Client.Database(conf.GConfig.Models.Db).Collection(conf.GConfig.Models.Task)
+	p, err = dbs.GMongoPool.Get()
+	defer dbs.GMongoPool.Put(p)
+
+	client = p.(*mongo.Client)
+	collection = client.Database(conf.GConfig.Models.Db).Collection(conf.GConfig.Models.Task)
 
 	findOptions = options.Find()
 	findOptions.SetSort(bsonx.Doc{{"_id", bsonx.Int32(-1)}})

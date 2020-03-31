@@ -74,11 +74,17 @@ func (u *UserMgr) UpdateOne(uptCond interface{}, update interface{}) (err error)
 	var (
 		res        *mongo.UpdateResult
 		collection *mongo.Collection
+		client     *mongo.Client
+		p          interface{}
 	)
 
 	fmt.Println("执行更新")
 
-	collection = dbs.GMongo.Client.Database(conf.GConfig.Models.Db).Collection(conf.GConfig.Models.User)
+	p, err = dbs.GMongoPool.Get()
+	defer dbs.GMongoPool.Put(p)
+
+	client = p.(*mongo.Client)
+	collection = client.Database(conf.GConfig.Models.Db).Collection(conf.GConfig.Models.User)
 
 	// 执行删除
 	if res, err = collection.UpdateOne(context.TODO(), uptCond, update); err != nil {
@@ -95,9 +101,15 @@ func (u *UserMgr) AddUser(user *UserMod) (err error) {
 	var (
 		collection *mongo.Collection
 		result     *mongo.InsertOneResult
+		client     *mongo.Client
+		p          interface{}
 	)
 
-	collection = dbs.GMongo.Client.Database(conf.GConfig.Models.Db).Collection(conf.GConfig.Models.User)
+	p, err = dbs.GMongoPool.Get()
+	defer dbs.GMongoPool.Put(p)
+
+	client = p.(*mongo.Client)
+	collection = client.Database(conf.GConfig.Models.Db).Collection(conf.GConfig.Models.User)
 
 	if result, err = collection.InsertOne(context.TODO(), user); err != nil {
 		fmt.Println(err)
@@ -114,9 +126,15 @@ func (u *UserMgr) FindOneUser(findCond interface{}) (user *UserMod, err error) {
 		res         *mongo.SingleResult
 		findOptions *options.FindOneOptions
 		userData    UserMod
+		client      *mongo.Client
+		p           interface{}
 	)
 
-	collection = dbs.GMongo.Client.Database(conf.GConfig.Models.Db).Collection(conf.GConfig.Models.User)
+	p, err = dbs.GMongoPool.Get()
+	defer dbs.GMongoPool.Put(p)
+
+	client = p.(*mongo.Client)
+	collection = client.Database(conf.GConfig.Models.Db).Collection(conf.GConfig.Models.User)
 
 	findOptions = options.FindOne()
 	res = collection.FindOne(context.TODO(), findCond, findOptions)

@@ -5,6 +5,7 @@ go 1.14
 require (
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/gorhill/cronexpr v0.0.0-20180427100037-88b0669f7d75
+	github.com/silenceper/pool v0.0.0-20200216122550-efd46f34321f
 	github.com/simagix/gox v0.0.0-20200321161420-9c27f427f3ca // indirect
 	github.com/simagix/keyhole v2.0.8+incompatible
 	github.com/simagix/mongo-ftdc v0.9.0 // indirect

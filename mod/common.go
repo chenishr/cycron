@@ -33,9 +33,15 @@ func (tm *CommonMgr) GetMaxId(coll string) (maxId int64, err error) {
 		uptData    interface{}
 		uptOptions *options.FindOneAndUpdateOptions
 		doc        CommonMod
+		client     *mongo.Client
+		p          interface{}
 	)
 
-	collection = dbs.GMongo.Client.Database(conf.GConfig.Models.Db).Collection(conf.GConfig.Models.Common)
+	p, err = dbs.GMongoPool.Get()
+	defer dbs.GMongoPool.Put(p)
+
+	client = p.(*mongo.Client)
+	collection = client.Database(conf.GConfig.Models.Db).Collection(conf.GConfig.Models.Common)
 
 	findCond = bson.M{"_id": coll}
 	uptData = bson.M{"$inc": bson.M{"max_id": 1}}

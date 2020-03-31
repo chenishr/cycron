@@ -17,7 +17,7 @@ var (
 	GMongo *Mongo
 )
 
-func init() {
+func initMongo() {
 	var (
 		client    *mongo.Client
 		mongoConf conf.MongoConf

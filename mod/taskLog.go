@@ -49,7 +49,11 @@ func init() {
 }
 
 func (tlm *TaskLogMgr) LogStat() (res []StatRes, err error) {
-	var cur *mongo.Cursor
+	var (
+		cur    *mongo.Cursor
+		client *mongo.Client
+		p      interface{}
+	)
 
 	today := time.Now().AddDate(0, 0, -30).Format("2006-01-02")
 
@@ -75,10 +79,13 @@ func (tlm *TaskLogMgr) LogStat() (res []StatRes, err error) {
 			{"$sort":{"_id.day":1}}
 		]
 		`
-	fmt.Println(pipeline)
 
 	opts := options.Aggregate()
-	collection := dbs.GMongo.Client.Database(conf.GConfig.Models.Db).Collection(conf.GConfig.Models.TaskLog)
+	p, err = dbs.GMongoPool.Get()
+	defer dbs.GMongoPool.Put(p)
+
+	client = p.(*mongo.Client)
+	collection := client.Database(conf.GConfig.Models.Db).Collection(conf.GConfig.Models.TaskLog)
 	if cur, err = collection.Aggregate(context.TODO(), mdb.MongoPipeline(pipeline), opts); err != nil {
 		return nil, err
 	}
@@ -97,9 +104,15 @@ func (tm *TaskLogMgr) FindOneTaskLog(findCond interface{}) (taskLog *TaskLogMod,
 		res         *mongo.SingleResult
 		findOptions *options.FindOneOptions
 		findTaskLog TaskLogMod
+		client      *mongo.Client
+		p           interface{}
 	)
 
-	collection = dbs.GMongo.Client.Database(conf.GConfig.Models.Db).Collection(conf.GConfig.Models.TaskLog)
+	p, err = dbs.GMongoPool.Get()
+	defer dbs.GMongoPool.Put(p)
+
+	client = p.(*mongo.Client)
+	collection = client.Database(conf.GConfig.Models.Db).Collection(conf.GConfig.Models.TaskLog)
 
 	findOptions = options.FindOne()
 	res = collection.FindOne(context.TODO(), findCond, findOptions)
@@ -117,9 +130,15 @@ func (tlm *TaskLogMgr) FindTaskLogs(findCond interface{}, page, pageSize int64) 
 		collection  *mongo.Collection
 		cursor      *mongo.Cursor
 		findOptions *options.FindOptions
+		client      *mongo.Client
+		p           interface{}
 	)
 
-	collection = dbs.GMongo.Client.Database(conf.GConfig.Models.Db).Collection(conf.GConfig.Models.TaskLog)
+	p, err = dbs.GMongoPool.Get()
+	defer dbs.GMongoPool.Put(p)
+
+	client = p.(*mongo.Client)
+	collection = client.Database(conf.GConfig.Models.Db).Collection(conf.GConfig.Models.TaskLog)
 
 	if page < 1 {
 		page = 1
@@ -150,9 +169,15 @@ func (tlm *TaskLogMgr) InsertMany(taskLog []interface{}) (err error) {
 	var (
 		collection *mongo.Collection
 		result     *mongo.InsertManyResult
+		client     *mongo.Client
+		p          interface{}
 	)
 
-	collection = dbs.GMongo.Client.Database(conf.GConfig.Models.Db).Collection(conf.GConfig.Models.TaskLog)
+	p, err = dbs.GMongoPool.Get()
+	defer dbs.GMongoPool.Put(p)
+
+	client = p.(*mongo.Client)
+	collection = client.Database(conf.GConfig.Models.Db).Collection(conf.GConfig.Models.TaskLog)
 
 	if result, err = collection.InsertMany(context.TODO(), taskLog); err != nil {
 		fmt.Println(err)
