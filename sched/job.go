@@ -3,8 +3,8 @@ package sched
 import (
 	"context"
 	"cycron/mod"
-	"fmt"
 	"github.com/gorhill/cronexpr"
+	log "github.com/sirupsen/logrus"
 	"strings"
 	"time"
 )
@@ -33,7 +33,7 @@ func NewJob(task *mod.TaskMod) (job *Job, err error) {
 
 	// 解析JOB的cron表达式
 	if expr, err = cronexpr.Parse(task.CronSpec); err != nil {
-		fmt.Println(task.TaskName, "表达式解析有误：", err)
+		log.Errorln(task.TaskName, "表达式解析有误：", err)
 		return nil, err
 	}
 

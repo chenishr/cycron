@@ -6,8 +6,8 @@ import (
 	"cycron/mod"
 	"cycron/sched"
 	"encoding/json"
-	"fmt"
 	"github.com/gorhill/cronexpr"
+	log "github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"net/http"
@@ -52,7 +52,7 @@ func DoDelTask(resp http.ResponseWriter, req *http.Request) {
 	}
 ERR:
 	// 6, 返回异常应答
-	fmt.Println(time.Now(), err)
+	log.Errorln(err)
 	if bytes, err = libs.BuildResponse(1001, err.Error(), nil); err == nil {
 		resp.Write(bytes)
 	}
@@ -126,7 +126,7 @@ func DoUpdateStatus(resp http.ResponseWriter, req *http.Request) {
 	}
 ERR:
 	// 6, 返回异常应答
-	fmt.Println(time.Now(), err)
+	log.Errorln(err)
 	if bytes, err = libs.BuildResponse(1001, err.Error(), nil); err == nil {
 		resp.Write(bytes)
 	}
@@ -163,8 +163,6 @@ func DoRunTask(resp http.ResponseWriter, req *http.Request) {
 		goto ERR
 	}
 
-	fmt.Println(task)
-
 	// 执行任务
 	sched.GScheduler.RunOnce(task.Id)
 
@@ -175,7 +173,7 @@ func DoRunTask(resp http.ResponseWriter, req *http.Request) {
 	}
 ERR:
 	// 6, 返回异常应答
-	fmt.Println(time.Now(), err)
+	log.Errorln(err)
 	if bytes, err = libs.BuildResponse(1001, err.Error(), nil); err == nil {
 		resp.Write(bytes)
 	}
@@ -197,7 +195,6 @@ func DoSaveTask(resp http.ResponseWriter, req *http.Request) {
 	// 2, 取表单中的task字段
 	//postTask, _ = ioutil.ReadAll(req.Body)
 	postTask = req.PostForm.Get("task")
-	fmt.Println(string(bytes))
 
 	// 3, 反序列化task
 	if err = json.Unmarshal([]byte(postTask), &task); err != nil {
@@ -225,10 +222,8 @@ func DoSaveTask(resp http.ResponseWriter, req *http.Request) {
 		goto ERR
 	}
 
-	fmt.Println(task)
-
 	if err = sched.GScheduler.AddJob(&task, true); err != nil {
-		fmt.Println("任务加入调度队列失败", err)
+		log.Errorln("任务加入调度队列失败", err)
 	}
 
 	// 5, 返回正常应答 ({"errno": 0, "msg": "", "data": {....}})
@@ -238,7 +233,7 @@ func DoSaveTask(resp http.ResponseWriter, req *http.Request) {
 	}
 ERR:
 	// 6, 返回异常应答
-	fmt.Println(time.Now(), err)
+	log.Errorln(err)
 	if bytes, err = libs.BuildResponse(1001, err.Error(), nil); err == nil {
 		resp.Write(bytes)
 	}

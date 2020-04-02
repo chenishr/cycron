@@ -4,7 +4,7 @@ import (
 	"context"
 	"cycron/conf"
 	"cycron/dbs"
-	"fmt"
+	log "github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -65,10 +65,10 @@ func (g *TaskGroupMgr) UpsertDoc(taskGroup *TaskGroupMod) (err error) {
 
 func (g *TaskGroupMgr) UpdateOne(uptCond interface{}, update interface{}) (err error) {
 	var (
-		res        *mongo.UpdateResult
 		collection *mongo.Collection
 		client     *mongo.Client
 		p          interface{}
+		result     *mongo.UpdateResult
 	)
 
 	p, err = dbs.GMongoPool.Get()
@@ -78,12 +78,12 @@ func (g *TaskGroupMgr) UpdateOne(uptCond interface{}, update interface{}) (err e
 	collection = client.Database(conf.GConfig.Models.Db).Collection(conf.GConfig.Models.TaskGroup)
 
 	// 执行删除
-	if res, err = collection.UpdateOne(context.TODO(), uptCond, update); err != nil {
-		fmt.Println(err)
+	if result, err = collection.UpdateOne(context.TODO(), uptCond, update); err != nil {
+		log.Errorln(err)
 		return
 	}
 
-	fmt.Println(res)
+	log.Debugln("更新"+conf.GConfig.Models.TaskGroup+"结果：", result)
 
 	return
 }
@@ -103,11 +103,11 @@ func (g *TaskGroupMgr) AddGroup(taskGroup *TaskGroupMod) (err error) {
 	collection = client.Database(conf.GConfig.Models.Db).Collection(conf.GConfig.Models.TaskGroup)
 
 	if result, err = collection.InsertOne(context.TODO(), taskGroup); err != nil {
-		fmt.Println(err)
+		log.Errorln(err)
 		return
 	}
 
-	fmt.Println(" 插入的 task_group ID：", result)
+	log.Debugln(" 插入的 task_group ID：", result)
 	return
 }
 

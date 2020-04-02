@@ -2,7 +2,7 @@ package sched
 
 import (
 	"cycron/mod"
-	"fmt"
+	log "github.com/sirupsen/logrus"
 	"os/exec"
 	"time"
 )
@@ -29,12 +29,12 @@ func (executor *Executor) ExecuteJob(result *ExecResult) {
 
 		// 任务结果
 		// 执行shell命令
-		fmt.Println("执行器开始执行", result.job.taskName, time.Now())
+		log.Debugln("执行器开始执行", result.job.taskName)
 		cmd = exec.CommandContext(result.job.cancelCtx, "/bin/bash", "-c", result.job.command)
 
 		// 执行并捕获输出
 		output, err = cmd.CombinedOutput()
-		fmt.Println("执行器结束执行", result.job.taskName, time.Now())
+		log.Debugln("执行器结束执行", result.job.taskName)
 
 		// 记录任务结束时间
 		result.endTime = time.Now()

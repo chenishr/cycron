@@ -4,12 +4,11 @@ import (
 	error2 "cycron/api/error"
 	"cycron/libs"
 	"cycron/mod"
-	"fmt"
+	log "github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
 	"net/http"
 	"strconv"
 	"strings"
-	"time"
 )
 
 func LogStat(resp http.ResponseWriter, req *http.Request) {
@@ -43,7 +42,7 @@ func LogStat(resp http.ResponseWriter, req *http.Request) {
 	}
 ERR:
 	// 6, 返回异常应答
-	fmt.Println(time.Now(), err)
+	log.Errorln(err)
 	if bytes, err = libs.BuildResponse(1001, err.Error(), nil); err == nil {
 		resp.Write(bytes)
 	}
@@ -98,7 +97,7 @@ func LogDetail(resp http.ResponseWriter, req *http.Request) {
 	}
 ERR:
 	// 6, 返回异常应答
-	fmt.Println(time.Now(), err)
+	log.Errorln(err)
 	if bytes, err = libs.BuildResponse(1001, err.Error(), nil); err == nil {
 		resp.Write(bytes)
 	}
@@ -165,7 +164,7 @@ func ListLogs(resp http.ResponseWriter, req *http.Request) {
 	}
 ERR:
 	// 6, 返回异常应答
-	fmt.Println(time.Now(), err)
+	log.Errorln(err)
 	if bytes, err = libs.BuildResponse(1001, err.Error(), nil); err == nil {
 		resp.Write(bytes)
 	}

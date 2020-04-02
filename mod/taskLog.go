@@ -4,8 +4,8 @@ import (
 	"context"
 	"cycron/conf"
 	"cycron/dbs"
-	"fmt"
 	"github.com/simagix/keyhole/mdb"
+	log "github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/x/bsonx"
@@ -180,10 +180,11 @@ func (tlm *TaskLogMgr) InsertMany(taskLog []interface{}) (err error) {
 	collection = client.Database(conf.GConfig.Models.Db).Collection(conf.GConfig.Models.TaskLog)
 
 	if result, err = collection.InsertMany(context.TODO(), taskLog); err != nil {
-		fmt.Println(err)
+		log.Errorln(err)
 		return
 	}
 
-	fmt.Println(" 插入的 task_log ID：", result)
+	log.Debugln(" 插入的 "+conf.GConfig.Models.TaskLog+" ID：", result)
+
 	return
 }

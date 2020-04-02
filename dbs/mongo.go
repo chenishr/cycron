@@ -3,7 +3,7 @@ package dbs
 import (
 	"context"
 	"cycron/conf"
-	"fmt"
+	log "github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"time"
@@ -30,14 +30,14 @@ func initMongo() {
 	ctx, _ = context.WithTimeout(context.TODO(), time.Duration(mongoConf.ConnectTimeout)*time.Millisecond)
 
 	// 建立mongodb连接
-	fmt.Println("建立mongodb连接")
+	log.Traceln("建立mongodb连接")
 	if client, err = mongo.Connect(
 		ctx,
 		options.Client().ApplyURI(mongoConf.Uri)); err != nil {
-		fmt.Println("链接 MongoDB 失败：", err)
+		log.Fatalln("链接 MongoDB 失败：", err)
 		return
 	}
-	fmt.Println("建立mongodb连接 成功")
+	log.Info("建立mongodb连接 成功")
 
 	GMongo = &Mongo{Client: client}
 	return

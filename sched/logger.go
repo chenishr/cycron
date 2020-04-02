@@ -3,7 +3,7 @@ package sched
 import (
 	"cycron/conf"
 	"cycron/mod"
-	"fmt"
+	log "github.com/sirupsen/logrus"
 	"time"
 )
 
@@ -26,14 +26,14 @@ var (
 func (l *Logger) saveLogs(batch *LogBatch) {
 	err := mod.GTaskLogMgr.InsertMany(batch.Logs)
 	if err != nil {
-		fmt.Println("保存日志失败：", err)
+		log.Errorln("保存日志失败：", err)
 	}
 }
 
 // 日志存储协程
 func (l *Logger) writeLoop() {
 	var (
-		log          *mod.TaskLogMod
+		logData      *mod.TaskLogMod
 		logBatch     *LogBatch // 当前的批次
 		commitTimer  *time.Timer
 		timeoutBatch *LogBatch // 超时批次
@@ -41,7 +41,7 @@ func (l *Logger) writeLoop() {
 
 	for {
 		select {
-		case log = <-l.logChan:
+		case logData = <-l.logChan:
 			if logBatch == nil {
 				logBatch = &LogBatch{}
 				// 让这个批次超时自动提交(给1秒的时间）
@@ -56,7 +56,7 @@ func (l *Logger) writeLoop() {
 			}
 
 			// 把新日志追加到批次中
-			logBatch.Logs = append(logBatch.Logs, log)
+			logBatch.Logs = append(logBatch.Logs, logData)
 
 			// 如果批次满了, 就立即发送
 			if len(logBatch.Logs) >= conf.GConfig.Logger.BatchSize {
@@ -97,7 +97,7 @@ func (l *Logger) Append(taskLog *mod.TaskLogMod) {
 	case l.logChan <- taskLog:
 	default:
 		// 队列满了就丢弃
-		fmt.Println("日记队列已满，丢弃本次执行日记")
+		log.Info("日记队列已满，丢弃本次执行日记")
 	}
 }
 
@@ -118,7 +118,8 @@ func (l *Logger) OrgData(res *ExecResult) {
 
 	id, err = mod.GCommonMgr.GetMaxId(conf.GConfig.Models.TaskLog)
 	if err != nil {
-		fmt.Println(err)
+		log.Errorln("获取"+conf.GConfig.Models.TaskLog+"自增 ID 失败", err)
+		return
 	}
 	taskLog = &mod.TaskLogMod{
 		Id:          id,

@@ -3,8 +3,8 @@ package dbs
 import (
 	"context"
 	"cycron/conf"
-	"fmt"
 	"github.com/silenceper/pool"
+	log "github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"time"
@@ -14,7 +14,7 @@ var (
 	GMongoPool pool.Pool
 )
 
-func init() {
+func InitMongoPool() {
 	//创建一个连接池： 初始化5，最大链接30
 	//创建一个连接池： 初始化5，最大空闲连接是20，最大并发连接30
 	poolConfig := &pool.Config{
@@ -29,7 +29,7 @@ func init() {
 	}
 	p, err := pool.NewChannelPool(poolConfig)
 	if err != nil {
-		fmt.Println("err=", err)
+		log.Info("err=", err)
 
 	}
 
@@ -49,9 +49,14 @@ func Factory() (interface{}, error) {
 	ctx, _ = context.WithTimeout(context.TODO(), time.Duration(mongoConf.ConnectTimeout)*time.Millisecond)
 
 	// 建立mongodb连接
-	fmt.Println("建立mongodb连接")
+	log.Info("建立mongodb连接")
 	if client, err = mongo.Connect(ctx, options.Client().ApplyURI(mongoConf.Uri)); err != nil {
-		fmt.Println("链接 MongoDB 失败：", err)
+		log.Fatalln("链接 MongoDB 失败：", err)
+		return nil, err
+	}
+
+	if err = client.Ping(ctx, nil); err != nil {
+		log.Fatalln("链接 MongoDB 失败：", err)
 		return nil, err
 	}
 
@@ -59,7 +64,6 @@ func Factory() (interface{}, error) {
 }
 
 func Close(v interface{}) error {
-
 	return v.(*mongo.Client).Disconnect(context.TODO())
 }
 

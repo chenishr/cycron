@@ -4,7 +4,7 @@ import (
 	"context"
 	"cycron/conf"
 	"cycron/dbs"
-	"fmt"
+	log "github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -94,13 +94,12 @@ func (tm *TaskMgr) UpsertDoc(task *TaskMod) (err error) {
 
 func (tm *TaskMgr) UpdateOne(uptCond interface{}, update interface{}) (err error) {
 	var (
-		res        *mongo.UpdateResult
 		collection *mongo.Collection
 		client     *mongo.Client
 		p          interface{}
 	)
 
-	fmt.Println("执行更新")
+	log.Traceln("执行更新")
 
 	p, err = dbs.GMongoPool.Get()
 	defer dbs.GMongoPool.Put(p)
@@ -109,12 +108,10 @@ func (tm *TaskMgr) UpdateOne(uptCond interface{}, update interface{}) (err error
 	collection = client.Database(conf.GConfig.Models.Db).Collection(conf.GConfig.Models.Task)
 
 	// 执行删除
-	if res, err = collection.UpdateOne(context.TODO(), uptCond, update); err != nil {
-		fmt.Println(err)
+	if _, err = collection.UpdateOne(context.TODO(), uptCond, update); err != nil {
+		log.Errorln(err)
 		return
 	}
-
-	fmt.Println(res)
 
 	return
 }
@@ -124,7 +121,6 @@ func (tm *TaskMgr) UpdateOne(uptCond interface{}, update interface{}) (err error
 */
 func (tm *TaskMgr) DelTasks(delCond interface{}) (err error) {
 	var (
-		delResult  *mongo.DeleteResult
 		collection *mongo.Collection
 		client     *mongo.Client
 		p          interface{}
@@ -137,12 +133,10 @@ func (tm *TaskMgr) DelTasks(delCond interface{}) (err error) {
 	collection = client.Database(conf.GConfig.Models.Db).Collection(conf.GConfig.Models.Task)
 
 	// 执行删除
-	if delResult, err = collection.DeleteMany(context.TODO(), delCond); err != nil {
-		fmt.Println(err)
+	if _, err = collection.DeleteMany(context.TODO(), delCond); err != nil {
+		log.Errorln(err)
 		return
 	}
-
-	fmt.Println(delResult)
 
 	return
 }
@@ -158,7 +152,7 @@ func (tm *TaskMgr) AddTask(task *TaskMod) (err error) {
 		p          interface{}
 	)
 
-	fmt.Println("执行添加")
+	log.Traceln("执行添加")
 
 	p, err = dbs.GMongoPool.Get()
 	defer dbs.GMongoPool.Put(p)
@@ -167,11 +161,11 @@ func (tm *TaskMgr) AddTask(task *TaskMod) (err error) {
 	collection = client.Database(conf.GConfig.Models.Db).Collection(conf.GConfig.Models.Task)
 
 	if result, err = collection.InsertOne(context.TODO(), task); err != nil {
-		fmt.Println(err)
+		log.Errorln(err)
 		return
 	}
 
-	fmt.Println(" 插入的 task ID：", result.InsertedID)
+	log.Traceln(" 插入的 task ID：", result.InsertedID)
 	return
 }
 

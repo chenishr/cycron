@@ -5,10 +5,9 @@ import (
 	"cycron/libs"
 	"cycron/mod"
 	"encoding/json"
-	"fmt"
+	log "github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"net/http"
-	"time"
 )
 
 func DoSaveTaskGroup(resp http.ResponseWriter, req *http.Request) {
@@ -27,7 +26,6 @@ func DoSaveTaskGroup(resp http.ResponseWriter, req *http.Request) {
 	// 2, 取表单中的task字段
 	//postTask, _ = ioutil.ReadAll(req.Body)
 	postTask = req.PostForm.Get("taskGroup")
-	fmt.Println(string(bytes))
 
 	// 3, 反序列化task
 	if err = json.Unmarshal([]byte(postTask), &taskGroup); err != nil {
@@ -51,7 +49,7 @@ func DoSaveTaskGroup(resp http.ResponseWriter, req *http.Request) {
 	}
 ERR:
 	// 6, 返回异常应答
-	fmt.Println(time.Now(), err)
+	log.Errorln(err)
 	if bytes, err = libs.BuildResponse(1001, err.Error(), nil); err == nil {
 		resp.Write(bytes)
 	}

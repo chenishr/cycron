@@ -2,7 +2,7 @@ package sched
 
 import (
 	"cycron/conf"
-	"fmt"
+	log "github.com/sirupsen/logrus"
 	"gopkg.in/gomail.v2"
 	"strconv"
 	"time"
@@ -36,7 +36,7 @@ func init() {
 				}
 
 				if err := GMailer.send(m.MailTo, m.Subject, m.Body); err != nil {
-					fmt.Println("邮件发送失败:", err.Error())
+					log.Errorln("邮件发送失败:", err.Error())
 				}
 			}
 		}
@@ -68,7 +68,7 @@ func (m *Mailer) send(mailTo []string, subject string, body string) error {
 
 	d := gomail.NewDialer(mailConf.Host, mailConf.Port, mailConf.User, mailConf.PassWord)
 
-	fmt.Println("发送邮件：" + subject)
+	log.Info("发送邮件：" + subject)
 	err := d.DialAndSend(mail)
 	return err
 }

@@ -4,7 +4,7 @@ import (
 	"context"
 	"cycron/conf"
 	"cycron/dbs"
-	"fmt"
+	log "github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -78,7 +78,7 @@ func (u *UserMgr) UpdateOne(uptCond interface{}, update interface{}) (err error)
 		p          interface{}
 	)
 
-	fmt.Println("执行更新")
+	log.Traceln("执行更新")
 
 	p, err = dbs.GMongoPool.Get()
 	defer dbs.GMongoPool.Put(p)
@@ -88,11 +88,11 @@ func (u *UserMgr) UpdateOne(uptCond interface{}, update interface{}) (err error)
 
 	// 执行删除
 	if res, err = collection.UpdateOne(context.TODO(), uptCond, update); err != nil {
-		fmt.Println(err)
+		log.Errorln(err)
 		return
 	}
 
-	fmt.Println(res)
+	log.Debugln(res)
 
 	return
 }
@@ -112,11 +112,12 @@ func (u *UserMgr) AddUser(user *UserMod) (err error) {
 	collection = client.Database(conf.GConfig.Models.Db).Collection(conf.GConfig.Models.User)
 
 	if result, err = collection.InsertOne(context.TODO(), user); err != nil {
-		fmt.Println(err)
+		log.Errorln(err)
 		return
 	}
 
-	fmt.Println(" 插入的 user ID：", result)
+	log.Debugln(" 插入的"+conf.GConfig.Models.User+"ID：", result)
+
 	return
 }
 

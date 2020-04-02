@@ -2,7 +2,7 @@ package sched
 
 import (
 	"cycron/mod"
-	"fmt"
+	log "github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
 	"time"
 )
@@ -30,7 +30,7 @@ var (
 	GScheduler *Scheduler
 )
 
-func init() {
+func InitScheduler() {
 	var (
 		s *Scheduler
 	)
@@ -44,18 +44,12 @@ func init() {
 	s.resChan = make(chan *ExecResult, 100)
 	s.jobs = make(map[int64]*Job, 100)
 	s.addJobChan = make(chan bool, 10)
-	fmt.Println("初始化调度队列")
+	log.Info("初始化调度队列")
 
 	GScheduler = s
 }
 
-func (s *Scheduler) Print() {
-	for id, job := range s.jobs {
-		fmt.Println(id, job)
-	}
-}
-
-func (s *Scheduler) InitScheduler() (err error) {
+func (s *Scheduler) StartScheduler() (err error) {
 	var (
 		tasks []*mod.TaskMod
 		jobs  map[int64]*Job
@@ -100,7 +94,7 @@ func (s *Scheduler) RemoveJob(taskId int64) {
 
 	// 终止正在调度的任务
 	if oldJob.runningCount > 0 {
-		fmt.Println("触发取消中的", oldJob.runningCount, "个任务")
+		log.Warnln("触发取消", oldJob.taskName, "执行中的", oldJob.runningCount, "个任务")
 		oldJob.cancelFunc()
 	}
 
@@ -159,10 +153,10 @@ func (s *Scheduler) loop() {
 	for {
 		now = time.Now()
 
-		//fmt.Println("当前调度时间：" ,now)
+		log.Traceln("当前调度时间：", now)
 
 		if len(s.jobs) == 0 {
-			fmt.Println("暂时没有任务执行", now)
+			log.Info("暂时没有任务执行", now)
 			waitTime = 1 * time.Second
 		}
 
@@ -173,7 +167,7 @@ func (s *Scheduler) loop() {
 				if job.runningCount < job.concurrent {
 					job.runningCount++
 
-					fmt.Println(job.taskName, "当前进行作业数", job.runningCount)
+					log.Traceln(job.taskName, "当前进行作业数", job.runningCount)
 
 					// 执行任务
 					res := &ExecResult{
@@ -188,7 +182,7 @@ func (s *Scheduler) loop() {
 					}
 					GExecutor.ExecuteJob(res)
 				} else {
-					fmt.Println("任务[", job.taskName, "]协程启动数量将超过允许的", job.concurrent, "个，本次被忽略")
+					log.Warnln("任务[", job.taskName, "]协程启动数量将超过允许的", job.concurrent, "个，本次被忽略")
 				}
 
 				// 每次调度之后都需要更新下次执行时间
@@ -203,8 +197,8 @@ func (s *Scheduler) loop() {
 		}
 
 		/*
-			fmt.Println("下次调度时间：" ,nearTime)
-			fmt.Println()
+			log.Info("下次调度时间：" ,nearTime)
+			log.Info()
 
 		*/
 
@@ -238,7 +232,7 @@ func (s *Scheduler) RunJob(job *Job) {
 	// 控制并发
 	job.runningCount++
 
-	fmt.Println(job.taskName, "当前进行作业数", job.runningCount)
+	log.Traceln(job.taskName, "当前进行作业数", job.runningCount)
 
 	// 执行任务
 	res := &ExecResult{
@@ -273,7 +267,7 @@ func (s *Scheduler) HandleEvent() {
 				} else {
 					errMsg = ""
 				}
-				fmt.Println(res.job.taskName + "打印结果:" + string(res.output) + "打印错误：" + errMsg)
+				log.Debugln(res.job.taskName + "打印结果:" + string(res.output) + "打印错误：" + errMsg)
 
 				// 发邮件通知
 				if (res.job.notify == 1 && res.err != nil) || res.job.notify == 2 {

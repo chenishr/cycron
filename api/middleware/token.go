@@ -5,10 +5,9 @@ import (
 	"cycron/conf"
 	"cycron/libs"
 	"cycron/mod"
-	"fmt"
+	log "github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
 	"net/http"
-	"time"
 )
 
 var (
@@ -58,7 +57,7 @@ func CheckToken() Middleware {
 
 		ERR_TOKEN:
 			// 异常
-			fmt.Println(time.Now(), err)
+			log.Errorln(err)
 			if bytes, err = libs.BuildResponse(1000, err.Error(), nil); err == nil {
 				resp.Write(bytes)
 			}

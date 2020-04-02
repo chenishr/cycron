@@ -7,10 +7,9 @@ import (
 	"cycron/libs"
 	"cycron/mod"
 	"encoding/json"
-	"fmt"
+	log "github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
 	"net/http"
-	"time"
 )
 
 func DoSaveUser(resp http.ResponseWriter, req *http.Request) {
@@ -58,7 +57,7 @@ func DoSaveUser(resp http.ResponseWriter, req *http.Request) {
 	}
 ERR:
 	// 6, 返回异常应答
-	fmt.Println(time.Now(), err)
+	log.Errorln(err)
 	if bytes, err = libs.BuildResponse(1001, err.Error(), nil); err == nil {
 		resp.Write(bytes)
 	}
@@ -101,8 +100,6 @@ func DoLogin(resp http.ResponseWriter, req *http.Request) {
 		goto ERR
 	}
 
-	fmt.Println(user)
-
 	if jwtToken, err = libs.CreateToken([]byte(conf.GConfig.Server.JwtSecret), uint(user.Id), user.UserName, user.Email); err != nil {
 		goto ERR
 	}
@@ -127,7 +124,7 @@ func DoLogin(resp http.ResponseWriter, req *http.Request) {
 	}
 ERR:
 	// 6, 返回异常应答
-	fmt.Println(time.Now(), err)
+	log.Errorln(err)
 	if bytes, err = libs.BuildResponse(1001, err.Error(), nil); err == nil {
 		resp.Write(bytes)
 	}
@@ -157,7 +154,7 @@ func UserInfo(resp http.ResponseWriter, req *http.Request) {
 	}
 
 	// 6, 返回异常应答
-	fmt.Println(time.Now(), err)
+	log.Errorln(err)
 	if bytes, err = libs.BuildResponse(1001, err.Error(), nil); err == nil {
 		resp.Write(bytes)
 	}

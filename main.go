@@ -2,39 +2,58 @@ package main
 
 import (
 	"cycron/api"
+	"cycron/conf"
+	"cycron/dbs"
 	"cycron/sched"
-	"fmt"
 	log "github.com/sirupsen/logrus"
 	"os"
-	"time"
 )
+
+func init() {
+	var (
+		file *os.File
+		err  error
+	)
+	// 设置将日志输出到标准输出（默认的输出为stderr，标准错误）
+	// 日志消息输出可以是任意的io.writer类型
+	log.SetOutput(os.Stdout)
+
+	//log.SetFormatter(&log.JSONFormatter{})
+	log.SetFormatter(&log.TextFormatter{
+		FullTimestamp:   true,
+		TimestampFormat: "2006-01-02 15:04:05",
+	})
+
+	if file, err = os.OpenFile(conf.GConfig.Logger.LogFile, os.O_RDWR|os.O_CREATE|os.O_APPEND, os.ModePerm); err != nil {
+		log.Fatalln("打开日志文件错误：", err)
+	}
+	log.SetOutput(file)
+
+	// 设置日志级别为warn以上
+	log.SetLevel(log.DebugLevel)
+
+	// 初始化 MongoDB 连接池
+	dbs.InitMongoPool()
+
+	// 初始化任务调度器
+	sched.InitScheduler()
+}
 
 func main() {
 	var (
 		err error
 	)
-	fmt.Println("这是一个定时任务管理程序")
+	log.Info("这是一个定时任务管理程序")
 
-	// 设置将日志输出到标准输出（默认的输出为stderr，标准错误）
-	// 日志消息输出可以是任意的io.writer类型
-	log.SetOutput(os.Stdout)
-
-	// 设置日志级别为warn以上
-	log.SetLevel(log.TraceLevel)
-	log.Info("slkdjfsd")
 	// 启动 HTTPServer
 	err = api.InitHttpServer()
 	if err != nil {
-		fmt.Println("HttpServer启动失败：", err)
+		log.Fatalln("HttpServer启动失败：", err)
 	}
 
-	err = sched.GScheduler.InitScheduler()
+	// 启动任务调度器
+	err = sched.GScheduler.StartScheduler()
 	if err != nil {
-		fmt.Println("调度器启动失败：", err)
+		log.Fatalln("调度器启动失败：", err)
 	}
-
-	sched.GScheduler.Print()
-
-	time.Sleep(3600 * time.Second)
-	fmt.Println("一小时后程序退出")
 }
