@@ -8,10 +8,11 @@ import (
 )
 
 type Scheduler struct {
-	jobs       map[int64]*Job   // 需要调度的作业集合
-	addJobChan chan bool        // 通知调度器有新任务添加
-	resChan    chan *ExecResult // 作业执行结果
-	running    bool             // 调度器是否已经启动
+	jobs         map[int64]*Job   // 需要调度的作业集合
+	addJobChan   chan bool        // 通知调度器有新任务添加
+	resChan      chan *ExecResult // 作业执行结果
+	running      bool             // 调度器是否已经启动
+	runningCount int64            // 当前正在执行的任务数
 }
 
 // 任务执行结果
@@ -166,8 +167,10 @@ func (s *Scheduler) loop() {
 				// 控制并发
 				if job.runningCount < job.concurrent {
 					job.runningCount++
+					s.runningCount++
 
 					log.Traceln(job.taskName, "当前进行作业数", job.runningCount)
+					log.Traceln("调度器当前进行作业数", s.runningCount)
 
 					// 执行任务
 					res := &ExecResult{
@@ -231,6 +234,7 @@ func (s *Scheduler) RunOnce(taskId int64) {
 func (s *Scheduler) RunJob(job *Job) {
 	// 控制并发
 	job.runningCount++
+	s.runningCount++
 
 	log.Traceln(job.taskName, "当前进行作业数", job.runningCount)
 
@@ -261,6 +265,7 @@ func (s *Scheduler) HandleEvent() {
 			select {
 			case res := <-s.resChan:
 				res.job.runningCount--
+				s.runningCount--
 
 				if res.err != nil {
 					errMsg = res.err.Error()

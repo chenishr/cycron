@@ -30,6 +30,7 @@ type MongoConf struct {
 type LoggerConf struct {
 	BatchSize int    `json:"batchsize"`
 	LogFile   string `json:"logFile"`
+	LogLevel  int    `json:"logLevel"`
 }
 
 type ModelsConf struct {

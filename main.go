@@ -26,11 +26,13 @@ func init() {
 
 	if file, err = os.OpenFile(conf.GConfig.Logger.LogFile, os.O_RDWR|os.O_CREATE|os.O_APPEND, os.ModePerm); err != nil {
 		log.Fatalln("打开日志文件错误：", err)
+	} else {
+		log.SetOutput(file)
 	}
-	log.SetOutput(file)
 
 	// 设置日志级别为warn以上
 	log.SetLevel(log.DebugLevel)
+	log.SetLevel(log.Level(conf.GConfig.Logger.LogLevel))
 
 	// 初始化 MongoDB 连接池
 	dbs.InitMongoPool()

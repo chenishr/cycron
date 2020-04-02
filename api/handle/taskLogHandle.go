@@ -6,6 +6,7 @@ import (
 	"cycron/mod"
 	log "github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
+	"math"
 	"net/http"
 	"strconv"
 	"strings"
@@ -109,10 +110,12 @@ func ListLogs(resp http.ResponseWriter, req *http.Request) {
 		postId   string
 		page     int
 		pageSize int
+		count    int64
 		bytes    []byte
 		findCond bson.M
 		taskLogs []*mod.TaskLogMod
 		list     []map[string]interface{}
+		resJson  map[string]interface{}
 	)
 
 	// 1, 解析POST表单
@@ -143,7 +146,12 @@ func ListLogs(resp http.ResponseWriter, req *http.Request) {
 
 	// 删除对应的 task
 	findCond = bson.M{"task_id": taskId}
-	taskLogs, err = mod.GTaskLogMgr.FindTaskLogs(findCond, int64(page), int64(pageSize))
+	if taskLogs, err = mod.GTaskLogMgr.FindTaskLogs(findCond, int64(page), int64(pageSize)); err != nil {
+		goto ERR
+	}
+	if count, err = mod.GTaskLogMgr.Count(findCond); err != nil {
+		goto ERR
+	}
 
 	list = make([]map[string]interface{}, len(taskLogs))
 	for k, v := range taskLogs {
@@ -157,8 +165,15 @@ func ListLogs(resp http.ResponseWriter, req *http.Request) {
 		list[k] = row
 	}
 
+	resJson = make(map[string]interface{})
+	resJson["list"] = list
+	resJson["page"] = page
+	resJson["page_size"] = pageSize
+	resJson["count"] = count
+	resJson["total_page"] = math.Ceil(float64(count) / float64(pageSize))
+
 	// 5, 返回正常应答 ({"errno": 0, "msg": "", "data": {....}})
-	if bytes, err = libs.BuildResponse(0, "success", list); err == nil {
+	if bytes, err = libs.BuildResponse(0, "success", resJson); err == nil {
 		resp.Write(bytes)
 		return
 	}

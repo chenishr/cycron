@@ -52,6 +52,26 @@ func init() {
 	GTaskMgr = &TaskMgr{}
 }
 
+func (t *TaskMgr) Count(findCond interface{}) (count int64, err error) {
+	var client *mongo.Client
+	var collection *mongo.Collection
+	var ctx = context.Background()
+	var p interface{}
+
+	p, err = dbs.GMongoPool.Get()
+	defer dbs.GMongoPool.Put(p)
+
+	client = p.(*mongo.Client)
+	collection = client.Database(conf.GConfig.Models.Db).Collection(conf.GConfig.Models.Task)
+
+	if count, err = collection.CountDocuments(ctx, findCond); err != nil {
+		log.Errorln("统计文档错误：", err)
+		return
+	}
+
+	return
+}
+
 /*
 添加或者更新文档
 */
@@ -196,7 +216,7 @@ func (tm *TaskMgr) FindOneTask(findCond interface{}) (task *TaskMod, err error) 
 	return
 }
 
-func (tm *TaskMgr) FindTasks(findCond interface{}) (tasks []*TaskMod, err error) {
+func (tm *TaskMgr) FindTasks(findCond interface{}, page, pageSize int64) (tasks []*TaskMod, err error) {
 	var (
 		collection  *mongo.Collection
 		cursor      *mongo.Cursor
@@ -211,8 +231,14 @@ func (tm *TaskMgr) FindTasks(findCond interface{}) (tasks []*TaskMod, err error)
 	client = p.(*mongo.Client)
 	collection = client.Database(conf.GConfig.Models.Db).Collection(conf.GConfig.Models.Task)
 
+	if page < 1 {
+		page = 1
+	}
+
 	findOptions = options.Find()
 	findOptions.SetSort(bsonx.Doc{{"_id", bsonx.Int32(-1)}})
+	findOptions.SetSkip((page - 1) * pageSize)
+	findOptions.SetLimit(pageSize)
 	cursor, err = collection.Find(context.TODO(), findCond, findOptions)
 	if err != nil {
 		return nil, err
@@ -236,7 +262,7 @@ func (tm *TaskMgr) FindTasks(findCond interface{}) (tasks []*TaskMod, err error)
 func (tm *TaskMgr) GetTasks() (tasks []*TaskMod, err error) {
 
 	findCond := primitive.M{"status": 1}
-	tasks, err = tm.FindTasks(findCond)
+	tasks, err = tm.FindTasks(findCond, 1, 10000)
 
 	return
 }

@@ -98,6 +98,26 @@ func (tlm *TaskLogMgr) LogStat() (res []StatRes, err error) {
 	return
 }
 
+func (tm *TaskLogMgr) Count(findCond interface{}) (count int64, err error) {
+	var client *mongo.Client
+	var collection *mongo.Collection
+	var ctx = context.Background()
+	var p interface{}
+
+	p, err = dbs.GMongoPool.Get()
+	defer dbs.GMongoPool.Put(p)
+
+	client = p.(*mongo.Client)
+	collection = client.Database(conf.GConfig.Models.Db).Collection(conf.GConfig.Models.TaskLog)
+
+	if count, err = collection.CountDocuments(ctx, findCond); err != nil {
+		log.Errorln("统计文档错误：", err)
+		return
+	}
+
+	return
+}
+
 func (tm *TaskLogMgr) FindOneTaskLog(findCond interface{}) (taskLog *TaskLogMod, err error) {
 	var (
 		collection  *mongo.Collection
