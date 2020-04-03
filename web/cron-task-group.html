@@ -1,0 +1,110 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title></title>
+    <!-- Bootstrap Styles-->
+    <link href="assets/css/bootstrap.css" rel="stylesheet" />
+    <!-- FontAwesome Styles-->
+    <link href="assets/css/font-awesome.css" rel="stylesheet" />
+    <!-- Morris Chart Styles-->
+
+    <!-- Custom Styles-->
+    <link href="assets/css/custom-styles.css" rel="stylesheet" />
+    <!-- Google Fonts-->
+    <link href='http://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css' />
+    <!-- TABLE STYLES-->
+    <link href="assets/js/dataTables/dataTables.bootstrap.css" rel="stylesheet" />
+</head>
+<body class="sub-body">
+<!-- /. NAV SIDE  -->
+<div id="sub-page-wrapper" >
+    <div id="sub-page-inner">
+        <div class="col-md-12">
+            <!--    Context Classes  -->
+            <div class="panel panel-default">
+
+                <div class="panel-heading">
+                    <button class="btn btn-primary" @click="open_model(-1)">添加分组</button>
+                </div>
+
+                <div class="panel-body">
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                            <tr>
+                                <th>#ID</th>
+                                <th>分组名称</th>
+                                <th>描述</th>
+                                <th>操作</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr v-for="(item,index) in taskGroupLists">
+                                <td>{{item.Id}}</td>
+                                <td>{{item.GroupName}}</td>
+                                <td>{{item.Description}}</td>
+                                <td>
+                                    <a href="javascript:void(0);" @click="open_model(index)" class="btn btn-info btn-sm" >编辑</a>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="panel-body">
+                    <div id="Paginator" style="text-align: center"> <ul id="pageLimit"></ul> </div>
+                </div>
+            </div>
+            <!--  end  Context Classes  -->
+        </div>
+
+        <!-- 添加任务对话框 -->
+        <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel"
+             aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                        <h4 class="modal-title" id="myModalLabel">添加分组</h4>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <input class="form-control" id="task-name" v-model="taskGroup.GroupName" placeholder="分组名称">
+                        </div>
+                        <div class="form-group">
+                            <textarea class="form-control" v-model="taskGroup.Description" rows="3" placeholder="分组说明"></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+                        <button type="button" @click="save_task_group();" class="btn btn-primary">保存</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- End Modals-->
+    </div>
+    <!-- /. ROW  -->
+</div>
+<!-- /. PAGE INNER  -->
+<!-- /. PAGE WRAPPER  -->
+<!-- JS Scripts-->
+<!-- jQuery Js -->
+<script src="assets/js/jquery-1.10.2.js"></script>
+<!-- Bootstrap Js -->
+<script src="assets/js/bootstrap.min.js"></script>
+<!-- DATA TABLE SCRIPTS -->
+<script src="assets/js/dataTables/jquery.dataTables.js"></script>
+<script src="assets/js/dataTables/dataTables.bootstrap.js"></script>
+
+<script src="assets/js/bootstrap-paginator.js"></script>
+
+<script src="assets/js/axios.min.js"></script>
+<script src="assets/js/global.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/vue"></script>
+<script src="assets/js/cron-task-group.js"></script>
+</body>
+</html>

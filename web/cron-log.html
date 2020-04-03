@@ -1,0 +1,133 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title></title>
+    <!-- Bootstrap Styles-->
+    <link href="assets/css/bootstrap.css" rel="stylesheet" />
+    <!-- FontAwesome Styles-->
+    <link href="assets/css/font-awesome.css" rel="stylesheet" />
+    <!-- Morris Chart Styles-->
+
+    <!-- Custom Styles-->
+    <link href="assets/css/custom-styles.css" rel="stylesheet" />
+    <!-- Google Fonts-->
+    <link href='http://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css' />
+    <!-- TABLE STYLES-->
+    <link href="assets/js/dataTables/dataTables.bootstrap.css" rel="stylesheet" />
+</head>
+<body class="sub-body">
+<!-- /. NAV SIDE  -->
+<div id="sub-page-wrapper">
+    <div id="sub-page-inner">
+        <div class="col-md-12">
+            <!--    Context Classes  -->
+            <div class="panel panel-default">
+
+                <div class="panel-heading">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <select class="form-control" v-model="taskId" @change="task_id_change()">
+                                <option v-for="(item,index) in taskLists" :value="item.Id" :key="index">#{{item.Id}} {{item.TaskName}}</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel-body">
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                            <tr>
+                                <th># ID</th>
+                                <th># 任务ID</th>
+                                <th>开始时间</th>
+                                <th>执行耗时</th>
+                                <th>状态</th>
+                                <th>操作</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr v-for="(item,index) in logList" :key="index">
+                                <td>{{item.Id}}</td>
+                                <td>{{item.TaskId}}</td>
+                                <td>{{item.RealTime}}</td>
+                                <td>{{item.ProcessTime}} ms</td>
+                                <td>
+                                    <span v-show="item.Status == '0'" class="label label-success">成功</span>
+                                    <span v-show="item.Status == '1'" class="label label-danger">报错</span>
+                                    <span v-show="item.Status == '2'" class="label label-danger">超时</span>
+                                    <span v-show="item.Status == '3'" class="label label-danger">取消</span>
+                                    <span v-show="item.Status == '4'" class="label label-danger">忽略</span>
+                                </td>
+                                <td>
+                                    <a href="javascript:void(0);" @click="show_log_detail(item.Id)" class="btn btn-default btn-sm" >详情</a>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="panel-body">
+                    <div id="Paginator" style="text-align: center"> <ul id="pageLimit"></ul> </div>
+                </div>
+            </div>
+            <!--  end  Context Classes  -->
+        </div>
+
+        <!-- 添加任务对话框 -->
+        <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel"
+             aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                        <h4 class="modal-title" id="myModalLabel">查看日记详情</h4>
+                    </div>
+                    <div class="modal-body">
+                        命令：<strong>{{log.Command}}</strong><br /><br />
+                        日志ID：#{{log.Id}} <br />
+                        任务ID：#{{log.TaskId}} <br />
+                        计划时间：{{log.PlanTime}}<br />
+                        调度时间：{{log.RealTime}}<br />
+                        开始时间：{{log.StartTime}}<br />
+                        结束时间：{{log.EndTime}}<br />
+                        执行耗时：{{log.ProcessTime}} ms<br />
+                        执行输出：<br />
+                        <pre>{{trimStr(log.Output)}}</pre>
+                        错误输出：<br />
+                        <pre>{{trimStr(log.Err)}}</pre>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- End Modals-->
+    </div>
+    <!-- /. ROW  -->
+</div>
+<!-- /. PAGE INNER  -->
+<!-- /. PAGE WRAPPER  -->
+<!-- JS Scripts-->
+<!-- jQuery Js -->
+<script src="assets/js/jquery-1.10.2.js"></script>
+<!-- Bootstrap Js -->
+<script src="assets/js/bootstrap.min.js"></script>
+<!-- Metis Menu Js -->
+<script src="assets/js/jquery.metisMenu.js"></script>
+<!-- DATA TABLE SCRIPTS -->
+<script src="assets/js/dataTables/jquery.dataTables.js"></script>
+<script src="assets/js/dataTables/dataTables.bootstrap.js"></script>
+
+<script src="assets/js/bootstrap-paginator.js"></script>
+
+<script src="assets/js/axios.min.js"></script>
+<script src="assets/js/global.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/vue"></script>
+<script src="assets/js/cron-log.js"></script>
+
+</body>
+</html>
