@@ -44,6 +44,8 @@ func DoSaveUser(resp http.ResponseWriter, req *http.Request) {
 
 	if "" != newPasswd {
 		user.Password = libs.Md5(newPasswd)
+	} else {
+		user.Password = ""
 	}
 
 	if err = mod.GUserMgr.UpsertDoc(&user); err != nil {
@@ -87,7 +89,7 @@ func DoLogin(resp http.ResponseWriter, req *http.Request) {
 
 	// 4, 保存到mongoDB
 
-	if "" == email || "" == passwd {
+	if "" == email {
 		err = error2.ServerError("参数错误")
 		goto ERR
 	}

@@ -61,13 +61,13 @@ func (tlm *TaskLogMgr) LogStat() (res []StatRes, err error) {
 		[
 		  {
 			"$match": {
-			  "start_time": { "$gt": "` + today + `" }
+			  "plan_time": { "$gt": "` + today + `" }
 			}
 		  },
 		  {
 			"$project": {
 			  "status": 1,
-			  "day": { "$substr": [ "$start_time", 0, 10 ] }
+			  "day": { "$substr": [ "$plan_time", 0, 10 ] }
 			}
 		  },
 		  {

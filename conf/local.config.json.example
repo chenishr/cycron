@@ -1,8 +1,34 @@
 {
   "mail": {
     "user": "",
-    "pass": "",
+    "password": "",
     "host": "",
-    "port": ""
+    "port": 465
+  },
+  "mongo": {
+    "uri": "mongodb://host:port",
+    "connectTimeout": 5000,
+    "commitTimeout": 1000
+  },
+  "logger": {
+    "batchsize": 100,
+    "logFile": "./log/runtime.log",
+    "日记级别": "0:PanicLevel;1:FatalLevel;2:ErrorLevel;3:WarnLevel;4:InfoLevel;5:DebugLevel;6:TraceLevel",
+    "logLevel": 6
+  },
+  "models": {
+    "db": "cycron",
+    "task": "task",
+    "taskGroup": "task_group",
+    "taskLog": "task_log",
+    "user": "user",
+    "common": "common"
+  },
+  "server": {
+    "webRoot": "./web/",
+    "port": 1888,
+    "readTimeout": 5000,
+    "writeTimeout": 5000,
+    "jwtSecret": "oewr2848*$&#kjsd"
   }
 }

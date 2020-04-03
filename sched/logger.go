@@ -107,13 +107,16 @@ func (l *Logger) OrgData(res *ExecResult) {
 		errMsg  string
 		err     error
 		id      int64
+		psTime  int
 	)
 
-	psTime := int(res.endTime.Sub(res.realTime) / time.Millisecond)
-	if res.err != nil {
-		errMsg = res.err.Error()
-	} else {
-		errMsg = ""
+	if mod.TASK_IGNORE != res.status {
+		psTime = int(res.endTime.Sub(res.realTime) / time.Millisecond)
+		if res.err != nil {
+			errMsg = res.err.Error()
+		} else {
+			errMsg = ""
+		}
 	}
 
 	id, err = mod.GCommonMgr.GetMaxId(conf.GConfig.Models.TaskLog)

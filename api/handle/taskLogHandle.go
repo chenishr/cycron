@@ -88,8 +88,14 @@ func LogDetail(resp http.ResponseWriter, req *http.Request) {
 	logData["ProcessTime"] = taskLog.ProcessTime
 	logData["PlanTime"] = taskLog.PlanTime
 	logData["RealTime"] = taskLog.RealTime
-	logData["StartTime"] = taskLog.StartTime
-	logData["EndTime"] = taskLog.EndTime
+
+	if taskLog.Status != mod.TASK_IGNORE {
+		logData["StartTime"] = taskLog.StartTime
+		logData["EndTime"] = taskLog.EndTime
+	} else {
+		logData["StartTime"] = "-"
+		logData["EndTime"] = "-"
+	}
 
 	// 5, 返回正常应答 ({"errno": 0, "msg": "", "data": {....}})
 	if bytes, err = libs.BuildResponse(0, "success", logData); err == nil {

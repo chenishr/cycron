@@ -55,17 +55,27 @@ func (u *UserMgr) UpsertDoc(user *UserMod) (err error) {
 	}
 
 	uptCond = bson.M{"_id": user.Id}
-	uptData = bson.M{
-		"$set": bson.M{
-			"user_name":       user.UserName,
-			"password":        user.Password,
-			"email":           user.Email,
-			"last_ip":         user.LastIp,
-			"last_login_time": user.LastLoginTime,
-			"status":          user.Status,
-			"role":            user.Role,
-			"update_time":     time.Now().Format("2006-01-02 15:04:05"),
-		},
+	if "" == user.Password {
+		uptData = bson.M{
+			"$set": bson.M{
+				"user_name":   user.UserName,
+				"email":       user.Email,
+				"status":      user.Status,
+				"role":        user.Role,
+				"update_time": time.Now().Format("2006-01-02 15:04:05"),
+			},
+		}
+	} else {
+		uptData = bson.M{
+			"$set": bson.M{
+				"user_name":   user.UserName,
+				"email":       user.Email,
+				"password":    user.Password,
+				"status":      user.Status,
+				"role":        user.Role,
+				"update_time": time.Now().Format("2006-01-02 15:04:05"),
+			},
+		}
 	}
 	return u.UpdateOne(uptCond, uptData)
 }

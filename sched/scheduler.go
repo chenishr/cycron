@@ -164,6 +164,17 @@ func (s *Scheduler) loop() {
 		for _, job := range s.jobs {
 			if job.nextTime.Before(now) || job.nextTime.Equal(now) {
 
+				res := &ExecResult{
+					job:       job,
+					output:    nil,
+					err:       nil,
+					status:    mod.TASK_SUCCESS,
+					planTime:  job.nextTime,
+					realTime:  now,
+					startTime: time.Time{},
+					endTime:   time.Time{},
+				}
+
 				// 控制并发
 				if job.runningCount < job.concurrent {
 					job.runningCount++
@@ -173,19 +184,11 @@ func (s *Scheduler) loop() {
 					log.Traceln("调度器当前进行作业数", s.runningCount)
 
 					// 执行任务
-					res := &ExecResult{
-						job:       job,
-						output:    nil,
-						err:       nil,
-						status:    mod.TASK_SUCCESS,
-						planTime:  job.nextTime,
-						realTime:  now,
-						startTime: time.Time{},
-						endTime:   time.Time{},
-					}
 					GExecutor.ExecuteJob(res)
 				} else {
 					log.Warnln("任务[", job.taskName, "]协程启动数量将超过允许的", job.concurrent, "个，本次被忽略")
+					res.status = mod.TASK_IGNORE
+					s.PushJobResult(res)
 				}
 
 				// 每次调度之后都需要更新下次执行时间

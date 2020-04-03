@@ -34,10 +34,10 @@ func InitHttpServer() (err error) {
 	// 配置路由
 	mux = http.NewServeMux()
 	// 任务管理
-	mux.HandleFunc("/task/save", mw.Chain(handle.DoSaveTask, mw.ReturnOption(), mw.SetHeader()))
-	mux.HandleFunc("/task/run", mw.Chain(handle.DoRunTask, mw.ReturnOption(), mw.SetHeader()))
-	mux.HandleFunc("/task/del", mw.Chain(handle.DoDelTask, mw.ReturnOption(), mw.SetHeader()))
-	mux.HandleFunc("/task/update_status", mw.Chain(handle.DoUpdateStatus, mw.ReturnOption(), mw.SetHeader()))
+	mux.HandleFunc("/task/save", mw.Chain(handle.DoSaveTask, mw.CheckToken(), mw.ReturnOption(), mw.SetHeader()))
+	mux.HandleFunc("/task/run", mw.Chain(handle.DoRunTask, mw.CheckToken(), mw.ReturnOption(), mw.SetHeader()))
+	mux.HandleFunc("/task/del", mw.Chain(handle.DoDelTask, mw.CheckToken(), mw.ReturnOption(), mw.SetHeader()))
+	mux.HandleFunc("/task/update_status", mw.Chain(handle.DoUpdateStatus, mw.CheckToken(), mw.ReturnOption(), mw.SetHeader()))
 	mux.HandleFunc("/task/list", mw.Chain(handle.ListTask, mw.ReturnOption(), mw.SetHeader()))
 
 	// 日记管理
@@ -46,7 +46,7 @@ func InitHttpServer() (err error) {
 	mux.HandleFunc("/log/stat", mw.Chain(handle.LogStat, mw.ReturnOption(), mw.SetHeader()))
 
 	// 任务组管理
-	mux.HandleFunc("/group/save", mw.Chain(handle.DoSaveTaskGroup, mw.ReturnOption(), mw.SetHeader()))
+	mux.HandleFunc("/group/save", mw.Chain(handle.DoSaveTaskGroup, mw.CheckToken(), mw.ReturnOption(), mw.SetHeader()))
 	mux.HandleFunc("/group/list", mw.Chain(handle.ListTaskGroup, mw.ReturnOption(), mw.SetHeader()))
 
 	// 用户管理

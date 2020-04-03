@@ -19,6 +19,7 @@ const (
 	TASK_ERROR   = 1 // 任务执行出错
 	TASK_TIMEOUT = 2 // 任务执行超时
 	TASK_CANCEL  = 3 // 任务被取消
+	TASK_IGNORE  = 4 // 任务被忽略,超出并行调度的限制数量
 )
 
 type TaskMod struct {
