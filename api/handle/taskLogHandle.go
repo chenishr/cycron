@@ -22,7 +22,7 @@ func LogStat(resp http.ResponseWriter, req *http.Request) {
 	)
 
 	// 删除对应的 task
-	if logStat, err = mod.GTaskLogMgr.LogStat(); err != nil {
+	if logStat, err = mod.GTaskLogStatMgr.LogStat(); err != nil {
 		goto ERR
 	}
 

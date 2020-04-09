@@ -4,12 +4,16 @@ import (
 	"cycron/conf"
 	"cycron/mod"
 	log "github.com/sirupsen/logrus"
+	"strconv"
+	"sync"
 	"time"
 )
 
 type Logger struct {
 	logChan        chan *mod.TaskLogMod
 	autoCommitChan chan *LogBatch
+	statChan       chan *mod.TaskLogStatMod
+	statCommitChan chan map[string]*mod.TaskLogStatMod
 }
 
 // 日志批次
@@ -27,6 +31,59 @@ func (l *Logger) saveLogs(batch *LogBatch) {
 	err := mod.GTaskLogMgr.InsertMany(batch.Logs)
 	if err != nil {
 		log.Errorln("保存日志失败：", err)
+	}
+}
+
+// 日志存储协程
+func (l *Logger) statLoop() {
+	var (
+		statData    *mod.TaskLogStatMod
+		statMap     map[string]*mod.TaskLogStatMod
+		timeoutStat map[string]*mod.TaskLogStatMod
+		key         string
+		ok          bool
+		mux         sync.Mutex
+	)
+
+	for {
+		select {
+		case statData = <-l.statChan:
+			if statMap == nil {
+				statMap = make(map[string]*mod.TaskLogStatMod)
+				// 让这个批次超时自动提交(给1秒的时间）
+				time.AfterFunc(
+					time.Duration(conf.GConfig.Mongo.CommitTimeout*5)*time.Millisecond,
+					func(stat map[string]*mod.TaskLogStatMod) func() {
+						return func() {
+							l.statCommitChan <- stat
+						}
+					}(statMap),
+				)
+			}
+
+			// 统计
+			key = statData.PlanTime + "::" + strconv.FormatInt(int64(statData.Status), 10)
+			if _, ok = statMap[key]; ok {
+				statMap[key].Count++
+			} else {
+				statMap[key] = &mod.TaskLogStatMod{
+					Status:   statData.Status,
+					PlanTime: statData.PlanTime,
+					Count:    1,
+				}
+			}
+
+		case timeoutStat = <-l.statCommitChan: // 过期的批次
+			mux.Lock()
+			// 把批次写入到mongo中
+			for _, val := range timeoutStat {
+				mod.GTaskLogStatMgr.UpsertDoc(val)
+			}
+			// 清空logBatch
+			statMap = nil
+
+			mux.Unlock()
+		}
 	}
 }
 
@@ -84,10 +141,13 @@ func init() {
 	GLogger = &Logger{
 		logChan:        make(chan *mod.TaskLogMod, 1000),
 		autoCommitChan: make(chan *LogBatch, 1000),
+		statChan:       make(chan *mod.TaskLogStatMod, 1000),
+		statCommitChan: make(chan map[string]*mod.TaskLogStatMod, 1000),
 	}
 
 	// 启动一个mongodb处理协程
 	go GLogger.writeLoop()
+	go GLogger.statLoop()
 	return
 }
 
@@ -97,7 +157,22 @@ func (l *Logger) Append(taskLog *mod.TaskLogMod) {
 	case l.logChan <- taskLog:
 	default:
 		// 队列满了就丢弃
-		log.Info("日记队列已满，丢弃本次执行日记")
+		log.Warnln("日记队列已满，丢弃本次执行日记")
+	}
+
+	t, _ := time.Parse("2006-01-02 15:04:05", taskLog.PlanTime)
+	// 记录精度，小时
+	plantime := t.Format("2006-01-02 15")
+	stat := &mod.TaskLogStatMod{
+		Status:   taskLog.Status,
+		PlanTime: plantime,
+		Count:    1,
+	}
+	select {
+	case l.statChan <- stat:
+	default:
+		// 队列满了就丢弃
+		log.Warnln("日记统计队列已满，丢弃本次执行日记")
 	}
 }
 

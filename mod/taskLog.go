@@ -9,6 +9,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/x/bsonx"
+	"strconv"
 	"time"
 )
 
@@ -48,14 +49,26 @@ func init() {
 	GTaskLogMgr = &TaskLogMgr{}
 }
 
-func (tlm *TaskLogMgr) LogStat() (res []StatRes, err error) {
+func (tlm *TaskLogMgr) LogStat(days int, staType int64) (res []StatRes, err error) {
 	var (
 		cur    *mongo.Cursor
 		client *mongo.Client
 		p      interface{}
 	)
 
-	today := time.Now().AddDate(0, 0, -7).Format("2006-01-02")
+	if days <= 0 {
+		days = 7
+	}
+
+	if staType <= 0 {
+		staType = 10
+	}
+
+	today := time.Now().AddDate(0, 0, -days).Format("2006-01-02")
+
+	if staType <= 0 {
+		staType = 10
+	}
 
 	pipeline := `
 		[
@@ -67,7 +80,7 @@ func (tlm *TaskLogMgr) LogStat() (res []StatRes, err error) {
 		  {
 			"$project": {
 			  "status": 1,
-			  "day": { "$substr": [ "$plan_time", 0, 10 ] }
+			  "day": { "$substr": [ "$plan_time", 0, ` + strconv.FormatInt(staType, 10) + ` ] }
 			}
 		  },
 		  {

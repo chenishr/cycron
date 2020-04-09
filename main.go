@@ -4,6 +4,7 @@ import (
 	"cycron/api"
 	"cycron/conf"
 	"cycron/dbs"
+	"cycron/mod"
 	"cycron/sched"
 	log "github.com/sirupsen/logrus"
 	"os"
@@ -39,6 +40,11 @@ func init() {
 
 	// 初始化任务调度器
 	sched.InitScheduler()
+
+	// 初始化默认用户
+	mod.GUserMgr.InitUser()
+
+	//mod.GTaskLogStatMgr.InitData()
 }
 
 func main() {

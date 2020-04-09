@@ -34,12 +34,13 @@ type LoggerConf struct {
 }
 
 type ModelsConf struct {
-	Db        string `json:"db"`
-	Task      string `json:"task"`
-	TaskGroup string `json:"taskGroup"`
-	TaskLog   string `json:"taskLog"`
-	User      string `json:"user"`
-	Common    string `json:"common"`
+	Db          string `json:"db"`
+	Task        string `json:"task"`
+	TaskGroup   string `json:"taskGroup"`
+	TaskLog     string `json:"taskLog"`
+	TaskLogStat string `json:"taskLogStat"`
+	User        string `json:"user"`
+	Common      string `json:"common"`
 }
 
 type ServerConf struct {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"cycron/conf"
 	"cycron/dbs"
+	"cycron/libs"
 	log "github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -33,6 +34,33 @@ var (
 
 func init() {
 	GUserMgr = &UserMgr{}
+}
+
+func (u UserMgr) InitUser() (err error) {
+	var (
+		findCond bson.M
+		id       int64
+		user     *UserMod
+	)
+	findCond = bson.M{}
+	if _, err = u.FindOneUser(findCond); err != nil {
+		id, err = GCommonMgr.GetMaxId(conf.GConfig.Models.User)
+		// 添加默认用户
+		user = &UserMod{
+			Id:         id,
+			UserName:   "admin",
+			Password:   libs.Md5("admin888"),
+			Email:      "admin@cycron.com",
+			Status:     0,
+			Role:       0,
+			CreateTime: time.Now().Format("2006-01-02 15:04:05"),
+			UpdateTime: time.Now().Format("2006-01-02 15:04:05"),
+		}
+
+		err = u.AddUser(user)
+	}
+
+	return
 }
 
 /*
