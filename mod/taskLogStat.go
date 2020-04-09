@@ -89,7 +89,7 @@ func (s *TaskLogStatMgr) LogStat() (res []StatRes, err error) {
 		p      interface{}
 	)
 
-	today := time.Now().AddDate(0, 0, -7).Format("2006-01-02")
+	today := time.Now().AddDate(0, 0, -30).Format("2006-01-02")
 
 	pipeline := `
 		[

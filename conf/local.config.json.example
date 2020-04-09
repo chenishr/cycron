@@ -21,6 +21,7 @@
     "task": "task",
     "taskGroup": "task_group",
     "taskLog": "task_log",
+    "taskLogStat": "task_log_stat",
     "user": "user",
     "common": "common"
   },
