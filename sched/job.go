@@ -21,6 +21,7 @@ type Job struct {
 	runningCount int                  // 当前正在执行的作业数
 	notify       int                  // 是否发送邮件通知
 	notifyEmail  []string             // 邮件通知列表
+	timeout      int                  // 任务执行超时设置
 }
 
 func NewJob(task *mod.TaskMod) (job *Job, err error) {
@@ -54,6 +55,7 @@ func NewJob(task *mod.TaskMod) (job *Job, err error) {
 		runningCount: 0,
 		notify:       task.Notify,
 		notifyEmail:  nil,
+		timeout:      task.Timeout,
 	}
 
 	// 至少得允许一个协程运行

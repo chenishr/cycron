@@ -1,9 +1,11 @@
 package sched
 
 import (
+	"context"
 	"cycron/mod"
 	log "github.com/sirupsen/logrus"
 	"os/exec"
+	"strings"
 	"time"
 )
 
@@ -22,15 +24,26 @@ func (executor *Executor) ExecuteJob(result *ExecResult) {
 			cmd    *exec.Cmd
 			err    error
 			output []byte
+			ctx    context.Context
+			cancel context.CancelFunc
 		)
 
 		result.startTime = time.Now()
 		result.endTime = time.Now()
 
+		// 设置超时
+		if result.job.timeout > 0 {
+			log.Infoln("设置超时环境", result.job.timeout)
+			ctx, cancel = context.WithTimeout(result.job.cancelCtx, time.Duration(result.job.timeout) * time.Second)
+			defer cancel()
+		} else {
+			ctx = result.job.cancelCtx
+		}
+
 		// 任务结果
 		// 执行shell命令
 		log.Debugln("执行器开始执行", result.job.taskName)
-		cmd = exec.CommandContext(result.job.cancelCtx, "/bin/bash", "-c", result.job.command)
+		cmd = exec.CommandContext(ctx, "/bin/bash", "-c", result.job.command)
 
 		// 执行并捕获输出
 		output, err = cmd.CombinedOutput()
@@ -42,7 +55,13 @@ func (executor *Executor) ExecuteJob(result *ExecResult) {
 		result.err = err
 
 		if err != nil {
-			result.status = mod.TASK_ERROR
+			if strings.Contains(err.Error(), "signal: killed") {
+				result.status = mod.TASK_CANCEL
+			} else if strings.Contains(err.Error(), "deadline exceeded") {
+				result.status = mod.TASK_TIMEOUT
+			} else {
+				result.status = mod.TASK_ERROR
+			}
 		}
 
 		// 上报执行结果

@@ -56,7 +56,7 @@ func Factory() (interface{}, error) {
 	}
 
 	if err = client.Ping(ctx, nil); err != nil {
-		log.Fatalln("链接 MongoDB 失败：", err)
+		log.Fatalln("ping MongoDB 失败：", err)
 		return nil, err
 	}
 
