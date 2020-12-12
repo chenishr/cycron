@@ -58,7 +58,7 @@ func InitHttpServer() (err error) {
 	serverConf = conf.GConfig.Server
 
 	// 静态文件目录
-	staticDir = http.Dir(serverConf.WebRoot)
+	staticDir = http.Dir(conf.RootPath + serverConf.WebRoot)
 	staticHandler = http.FileServer(staticDir)
 	mux.Handle("/", http.StripPrefix("/", staticHandler)) //   ./webroot/index.html
 

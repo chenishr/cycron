@@ -25,7 +25,7 @@ func init() {
 		TimestampFormat: "2006-01-02 15:04:05",
 	})
 
-	if file, err = os.OpenFile(conf.GConfig.Logger.LogFile, os.O_RDWR|os.O_CREATE|os.O_APPEND, os.ModePerm); err != nil {
+	if file, err = os.OpenFile(conf.RootPath + conf.GConfig.Logger.LogFile, os.O_RDWR|os.O_CREATE|os.O_APPEND, os.ModePerm); err != nil {
 		log.Fatalln("打开日志文件错误：", err)
 	} else {
 		log.SetOutput(file)

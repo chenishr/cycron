@@ -3,6 +3,8 @@ package conf
 import (
 	"encoding/json"
 	"io/ioutil"
+	"os"
+	"path/filepath"
 )
 
 // 程序配置
@@ -54,6 +56,7 @@ type ServerConf struct {
 var (
 	// 单例
 	GConfig *Config
+	RootPath string
 )
 
 // 加载配置
@@ -65,7 +68,13 @@ func init() {
 		err      error
 	)
 
-	filename = "./conf/local.config.json"
+	ex, err := os.Executable()
+	if err != nil {
+		panic(err)
+	}
+	RootPath = filepath.Dir(ex)
+
+	filename = RootPath + "/conf/local.config.json"
 
 	// 1, 把配置文件读进来
 	if content, err = ioutil.ReadFile(filename); err != nil {
